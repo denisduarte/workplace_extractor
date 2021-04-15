@@ -1,4 +1,4 @@
-from miscelaneous import base_url_GRAPH, fetch, fetch_url
+from workplace_extractor.miscelaneous import base_url_GRAPH, fetch, fetch_url
 import numpy as np
 import pandas as pd
 import logging

@@ -3,3 +3,5 @@
 /access.token
 /posts.csv
 /views.csv
+/extraction.log
+/*.pickle
