@@ -1,7 +1,7 @@
 /.idea/
 /venv/
-/access.token
-/posts.csv
-/views.csv
-/extraction.log
-/*.pickle
+*.token
+*.log
+*.txt
+*.pickle
+*.csv
