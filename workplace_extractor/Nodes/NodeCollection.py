@@ -93,3 +93,5 @@ class PostCollection(NodeCollection):
         for index, post in enumerate(self.nodes):
             if post.partial_id in filter_ids:
                 self.nodes.pop(index)
+
+

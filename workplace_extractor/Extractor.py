@@ -218,11 +218,3 @@ class Extractor(object):
 
         if tries == max_retries:
             raise TimeoutError('Too many retries')
-
-
-
-import pandas as pd
-
-a =  pd.DataFrame([{'a': 1, 'b': 2}])
-
-a.to_csv('a.csv')

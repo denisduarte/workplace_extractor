@@ -77,7 +77,7 @@ class PostExtractor:
 
         await self.extractor.fetch(http_calls)
 
-        logging.info(f'Extracting posts from {len(group_feeds.nodes)} people.')
+        logging.info(f'Extracting posts from {len(person_feeds.nodes)} people.')
         http_calls = {}
         for feed in person_feeds.nodes:
             http_calls[feed.id] = {
