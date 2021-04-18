@@ -1,4 +1,4 @@
-from workplace_extractor.Nodes import Node
+from workplace_extractor.Nodes.Node import Node
 
 import pandas as pd
 import logging

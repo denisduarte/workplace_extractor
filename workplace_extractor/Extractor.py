@@ -1,5 +1,7 @@
-from workplace_extractor.Extractors import PostExtractor
-from workplace_extractor.Nodes import Node, PostCollection, NodeCollection, Post
+from workplace_extractor.Extractors.PostExtractor import PostExtractor
+from workplace_extractor.Nodes.Node import Node
+from workplace_extractor.Nodes.Post import Post
+from workplace_extractor.Nodes.NodeCollection import PostCollection, NodeCollection
 from workplace_extractor.Nodes.Feed import PersonFeed, GroupFeed, BotFeed
 from workplace_extractor.Nodes.Post import Summary
 
@@ -7,7 +9,6 @@ import sys
 import logging
 import asyncio
 import aiohttp
-import pandas as pd
 
 
 class AuthTokenError(Exception):

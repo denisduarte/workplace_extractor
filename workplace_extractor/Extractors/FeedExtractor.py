@@ -1,4 +1,4 @@
-from workplace_extractor.Nodes import NodeCollection
+from workplace_extractor.Nodes.NodeCollection import NodeCollection
 
 import numpy as np
 import logging

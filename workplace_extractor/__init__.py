@@ -1,1 +1,0 @@
-from workplace_extractor.Extractor import Extractor

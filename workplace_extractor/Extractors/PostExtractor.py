@@ -1,4 +1,4 @@
-from workplace_extractor.Nodes import NodeCollection, PostCollection
+from workplace_extractor.Nodes.NodeCollection import NodeCollection, PostCollection
 from workplace_extractor.Nodes.Post import Summary
 from workplace_extractor.Extractors.FeedExtractor import PersonFeedExtractor, GroupFeedExtractor
 
