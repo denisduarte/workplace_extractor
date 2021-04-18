@@ -1,8 +1,8 @@
 from distutils.core import setup
 setup(
     name='workplace_extractor',
-    packages=['workplace_extractor'],
-    version='0.6',
+    packages=['workplace_extractor', 'workplace_extractor.Nodes', 'workplace_extractor.Extractors'],
+    version='0.6.1',
     license='MIT',
     description='Extract posts created in a corporate Workplace by Facebook installation using the Graph API',
     author='Denis Duarte',

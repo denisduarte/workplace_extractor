@@ -1,5 +1,5 @@
-from workplace_extractor.Nodes.Node import Node
-from workplace_extractor.Nodes.Group import Group
+from workplace_extractor.Nodes import Node
+from workplace_extractor.Nodes import Group
 from workplace_extractor.Nodes.NodeCollection import PostCollection
 from workplace_extractor.Nodes.Author import Person, Bot
 

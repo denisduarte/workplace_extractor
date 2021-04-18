@@ -1,4 +1,4 @@
-from workplace_extractor.Nodes.Node import Node
+from workplace_extractor.Nodes import Node
 
 
 class Group(Node):

@@ -1,4 +1,4 @@
-from workplace_extractor.Nodes.NodeCollection import NodeCollection
+from workplace_extractor.Nodes import NodeCollection
 
 import numpy as np
 import logging
@@ -40,17 +40,7 @@ class PersonFeedExtractor:
                                           'callback': self.callback,
                                           'results': people,
                                           'params': None}
-        http_calls = {
-            0: {'url': f'{self.extractor.base_url_SCIM}/100061671391770', 'callback': self.callback, 'results': people, 'params': None},
-            1: {'url': f'{self.extractor.base_url_SCIM}/100041080666304', 'callback': self.callback, 'results': people, 'params': None},
-            2: {'url': f'{self.extractor.base_url_SCIM}/100048187463378', 'callback': self.callback, 'results': people, 'params': None},
-            3: {'url': f'{self.extractor.base_url_SCIM}/100041789363708', 'callback': self.callback, 'results': people, 'params': None},
-            4: {'url': f'{self.extractor.base_url_SCIM}/100048629432452', 'callback': self.callback, 'results': people, 'params': None},
-            5: {'url': f'{self.extractor.base_url_SCIM}/100048571625443', 'callback': self.callback, 'results': people, 'params': None},
-            6: {'url': f'{self.extractor.base_url_SCIM}/100041774161937', 'callback': self.callback, 'results': people, 'params': None},
-            7: {'url': f'{self.extractor.base_url_SCIM}/100041504117021', 'callback': self.callback, 'results': people, 'params': None},
-            8: {'url': f'{self.extractor.base_url_SCIM}/100048497258001', 'callback': self.callback, 'results': people, 'params': None}
-        }
+
         await self.extractor.fetch(http_calls)
 
         logging.info(f'get_member_ids ended with {len(people.nodes)} members extracted')
@@ -104,12 +94,6 @@ class GroupFeedExtractor:
             'callback': self.callback,
             'results': groups,
             'params': None}}
-
-        http_calls = {
-                0: {'url': f'{self.extractor.base_url_GRAPH}/176968500657062', 'callback': self.callback, 'results': groups, 'params': None},
-                1: {'url': f'{self.extractor.base_url_GRAPH}/3032149420166511', 'callback': self.callback, 'results': groups, 'params': None},
-                2: {'url': f'{self.extractor.base_url_GRAPH}/1224091774442323', 'callback': self.callback, 'results': groups, 'params': None}
-        }
 
         await self.extractor.fetch(http_calls)
 
