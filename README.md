@@ -36,10 +36,10 @@ The `Extractor` class expects the following parameters:
 * **since** - the starting date for the extraction. Use the YYYY-MM-DD format.
 * **until** - the ending date (exclusive) for the extraction. Use the YYYY-MM-DD format.
 * **csv** - path of the CSV file that will be created at the end of the extraction
-* **loglevel** - the lev used by `logging`. Should be one of ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+* **loglevel** - the lev used by `logging`. Should be one of ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']. A file called `workplace_extractor.log` will be created in the same folder as your Python program
 
 # Warning
-As many http calls are made during the export process, your program may take a while to finish, depending on the size of your Workplace installation. As a reference, on a installation with around 85,000 users, 3,000 groups and 110,000 posts the exectution takes around 4 hours to complete.
+As many http calls are made during the export process, your program may take a while to finish, depending on the size of your Workplace installation. As a reference, on an installation with around 85,000 users, 3,000 groups and 110,000 posts the exectution takes around 4 hours to complete.
 
 # License
 

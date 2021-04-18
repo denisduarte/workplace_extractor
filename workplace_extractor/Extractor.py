@@ -73,7 +73,7 @@ class Extractor(object):
 
     async def _extract(self):
         logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                            filename='extraction.log',
+                            filename='workplace_extractor.log',
                             level=getattr(logging, self.loglevel))
 
         # set the access token to be used in the http calls
