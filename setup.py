@@ -8,7 +8,7 @@ setup(
     author='Denis Duarte',
     author_email='den.duarte@gmail.com',
     url='https://github.com/denisduarte/workplace_extractor',
-    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.6.4.tar.gz',
+    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.6.4-1.tar.gz',
     keywords=['extraction', 'posts', 'workplace'],
     install_requires=[
         'numpy>=1.20',
