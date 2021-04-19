@@ -119,13 +119,13 @@ class PostExtractor:
                 # including Bots
                 if post.author is None:
                     bot = []
-                    http_calls = {
+                    http_calls_aux = {
                         0: {'url': f'{self.extractor.base_url_GRAPH}/{post.author_id}',
                             'callback': self.callback_bot,
                             'results': bot,
                             'params': {'post': post}}
                     }
-                    await self.extractor.fetch(http_calls)
+                    await self.extractor.fetch(http_calls_aux)
 
         await self.extractor.fetch(http_calls)
 

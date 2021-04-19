@@ -1,4 +1,4 @@
-from workplace_extractor.Extractor import Extractor
+from workplace_extractor import Extractor
 import argparse
 
 
