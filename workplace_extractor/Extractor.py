@@ -9,6 +9,7 @@ import sys
 import logging
 import asyncio
 import aiohttp
+import pandas as pd
 
 
 class AuthTokenError(Exception):
