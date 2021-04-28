@@ -1,7 +1,10 @@
+from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
+from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
 from workplace_extractor.Nodes import NodeCollection, PostCollection
+from workplace_extractor.Nodes.Author import Bot
 from workplace_extractor.Nodes.Post import Summary
 from workplace_extractor.Extractors.FeedExtractor import PersonFeedExtractor, GroupFeedExtractor
-
+from copy import copy
 import logging
 
 
@@ -55,20 +58,20 @@ class PostExtractor:
 
     async def extract(self):
         logging.info('Loading group feeds')
-        group_feeds = await GroupFeedExtractor(self.extractor).extract()
-        self.feeds.extend(group_feeds)
+        groups = await GroupExtractor(self.extractor).extract()
+        self.feeds.extend(groups)
         logging.info('Group feeds loaded')
 
         logging.info('Loading person feeds')
-        person_feeds = await PersonFeedExtractor(self.extractor).extract()
-        self.feeds.extend(person_feeds)
+        people = await PersonExtractor(self.extractor).extract()
+        self.feeds.extend(people)
         logging.info('Person feeds loaded')
 
-        fields = 'id,from,type,created_time,status_type,object_id,link'
+        fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
 
-        logging.info(f'Extracting posts from {len(group_feeds.nodes)} groups.')
+        logging.info(f'Extracting posts from {len(groups.nodes)} groups.')
         http_calls = {}
-        for feed in group_feeds.nodes:
+        for feed in groups.nodes:
             http_calls[feed.id] = {
               'url': f'{self.extractor.base_url_GRAPH}/{feed.id}/feed?limit=100&fields={fields}&since={self.since}&until={self.until}',
               'callback': self.callback,
@@ -77,17 +80,21 @@ class PostExtractor:
 
         await self.extractor.fetch(http_calls)
 
-        logging.info(f'Extracting posts from {len(person_feeds.nodes)} people.')
+        logging.info(f'Extracting posts from {len(people.nodes)} people.')
         http_calls = {}
-        for feed in person_feeds.nodes:
-            http_calls[feed.id] = {
-              'url': f'{self.extractor.base_url_GRAPH}/{feed.id}/feed?limit=100&fields={fields}&since={self.since}&until={self.until}',
-              'callback': self.callback,
-              'results': None,
-              'params': {'feed': feed}}
+        for feed in people.nodes:
+
+            if f'{self.extractor.base_url_GRAPH}/{feed.id}/feed?limit=100&fields={fields}&since={self.since}&until={self.until}' == 'https://graph.facebook.com/None/feed?limit=100&fields=id,from,type,created_time,status_type,object_id,link,message,story&since=2021-04-01&until=2021-04-03':
+                print('a')
+
+            if feed.id is not None:
+                http_calls[feed.id] = {
+                  'url': f'{self.extractor.base_url_GRAPH}/{feed.id}/feed?limit=100&fields={fields}&since={self.since}&until={self.until}',
+                  'callback': self.callback,
+                  'results': None,
+                  'params': {'feed': feed}}
 
         await self.extractor.fetch(http_calls)
-
         await self.fetch_posts_info()
 
         logging.info('Post extraction ended')
@@ -95,7 +102,7 @@ class PostExtractor:
     async def fetch_posts_info(self):
         http_calls = {}
         for feed in self.feeds.nodes:
-            for post in feed.posts.nodes:
+            for post in feed.feed.posts.nodes:
                 http_calls[f'seen_{feed.id}_{post.partial_id}'] = {
                     'url': f'{self.extractor.base_url_GRAPH}/{post.id}/seen?summary=TRUE',
                     'callback': self.callback_count,
@@ -114,10 +121,15 @@ class PostExtractor:
                     'results': None,
                     'params': {'post': post, 'type': 'comments'}}
 
-                post.author = next((node.owner for node in self.feeds.nodes if node.id == post.author_id), None)
+                author = next((node for node in self.feeds.nodes if node.id == post.author_id), None)
 
                 # including Bots
-                if post.author is None:
+                if author is not None:
+                    author = copy(author)
+                    author.feed = None
+
+                    post.author = author
+                else:
                     bot = []
                     http_calls_aux = {
                         0: {'url': f'{self.extractor.base_url_GRAPH}/{post.author_id}',
@@ -132,22 +144,32 @@ class PostExtractor:
     async def callback(self, url, results, params, session):
         data = await self.extractor.fetch_url(url, session, 'Post')
 
-        if isinstance(data['collection'], PostCollection) and data['collection'].nodes:
-            data['collection'].set_partial_id()
-            data['collection'].drop_duplicates(self.filter_ids)
+        try:
+            if 'collection' in data:
+                if isinstance(data['collection'], PostCollection) and data['collection'].nodes:
+                    data['collection'].set_partial_id()
+                    data['collection'].drop_duplicates(self.filter_ids)
 
-            if data['collection'].nodes:
-                params['feed'].posts.extend(data['collection'].nodes)
-                self.add_to_filter(data['collection'].nodes)
+                    if data['collection'].nodes:
+                        params['feed'].feed.posts.extend(data['collection'].nodes)
+                        self.add_to_filter(data['collection'].nodes)
 
-                if data['next_page']:
-                    await self.callback(data['next_page'], results, params, session)
+                        if data['next_page']:
+                            await self.callback(data['next_page'], results, params, session)
+            else:
+                print(url)
+                print('none people')
+        except:
+            print(1)
+
 
     async def callback_bot(self, url, results, params, session):
         data = await self.extractor.fetch_url(url, session, 'Bot')
 
-        params['post'].author = data.nodes[0].owner
-        self.feeds.extend(data)
+        if isinstance(data, Bot):
+            params['post'].author = data
+        else:
+            print(1)
 
     async def callback_count(self, url, results, params, session):
         data = await self.extractor.fetch_url(url, session, 'Summary')

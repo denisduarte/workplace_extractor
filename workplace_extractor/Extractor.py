@@ -1,6 +1,12 @@
-from workplace_extractor.Extractors import PostExtractor
+import pickle
+
+from workplace_extractor.Extractors import PostExtractor, PersonFeedExtractor
+from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
+from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
 from workplace_extractor.Nodes import Node
 from workplace_extractor.Nodes import Post
+from workplace_extractor.Nodes.Author import Person, Bot
+from workplace_extractor.Nodes.Group import Group
 from workplace_extractor.Nodes.NodeCollection import PostCollection, NodeCollection
 from workplace_extractor.Nodes.Feed import PersonFeed, GroupFeed, BotFeed
 from workplace_extractor.Nodes.Post import Summary
@@ -18,16 +24,28 @@ class AuthTokenError(Exception):
 
 class Extractor(object):
 
-    semaphore = asyncio.Semaphore(400)
+    semaphore = asyncio.Semaphore(300)
 
-    def __init__(self, token, since, until, csv, loglevel):
+    def __init__(self, token, export, since, until, csv, loglevel):
         self.token = token
+        self.export = export
         self.since = since
         self.until = until
         self.csv = csv
         self.loglevel = loglevel
         self.base_url_GRAPH = 'https://graph.facebook.com'
         self.base_url_SCIM = 'https://www.workplace.com/scim/v1/Users'
+
+    async def init(self):
+        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                            filename='workplace_extractor.log',
+                            level=getattr(logging, self.loglevel))
+
+        # set the access token to be used in the http calls
+        try:
+            await self.set_token()
+        except AuthTokenError as e:
+            sys.exit(e)
 
     @property
     def token(self):
@@ -69,26 +87,28 @@ class Extractor(object):
     def loglevel(self, value):
         self._loglevel = value
 
-    def run(self):
+    def extract(self):
+        export = {'POSTS': self._extract_posts,
+                  'PEOPLE': self._extract_people,
+                  'GROUPS': self._extract_groups}
+
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._extract())
+        loop.run_until_complete(export.get(self.export)())
 
-    async def _extract(self):
-        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                            filename='workplace_extractor.log',
-                            level=getattr(logging, self.loglevel))
+    async def _extract_posts(self):
 
-        # set the access token to be used in the http calls
-        try:
-            await self.set_token()
-        except AuthTokenError as e:
-            sys.exit(e)
+        await self.init()
 
         extractor = PostExtractor(extractor=self, since=self.since, until=self.until)
 
         logging.info(f'Extracting posts from')
         await extractor.extract()
         logging.info(f'Extraction of posts finished')
+
+        #with open('extract-groups.pickle', 'wb') as handle:
+        #   pickle.dump(extractor.feeds, handle)
+        #with open('extract-groups.pickle', 'rb') as handle:
+        #   extractor.feeds = pickle.load(handle)
 
         logging.info(f'Converting to Pandas')
         posts = extractor.feeds.to_pandas()
@@ -102,6 +122,38 @@ class Extractor(object):
         logging.info(f'Post extraction finished')
 
         return posts
+
+    async def _extract_people(self):
+
+        await self.init()
+
+        extractor = PersonExtractor(self)
+
+        logging.info(f'Extracting members')
+        members = await extractor.extract()
+        logging.info(f'Extraction members finished')
+
+        if self.csv:
+            members.to_pandas().replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
+                               .to_csv(self.csv, index=False, sep=";")
+
+        return members
+
+    async def _extract_groups(self):
+
+        await self.init()
+
+        extractor = GroupExtractor(self)
+
+        logging.info(f'Extracting groups')
+        groups = await extractor.extract()
+        logging.info(f'Extraction groups finished')
+
+        if self.csv:
+            groups.to_pandas().replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
+                              .to_csv(self.csv, index=False, sep=";")
+
+        return groups
 
     async def set_token(self):
         with open(self.token) as file:
@@ -161,6 +213,20 @@ class Extractor(object):
                         data = pd.DataFrame({'Errors': resp.status}, index=[0])
                         return data
 
+                    if resp.status in [500]:
+                        raise Exception
+
+                    if type == 'Person':
+                        # for SCIM API
+                        response = await resp.json(content_type='text/javascript')
+                        if 'Resources' in response.keys():
+                            collection = NodeCollection([Person(person) for person in response['Resources']])
+                            return collection
+
+                        # Remove after tests
+                        collection = NodeCollection([Person(response)])
+                        return collection
+
                     if type == 'PersonFeed':
                         # for SCIM API
                         response = await resp.json(content_type='text/javascript')
@@ -168,10 +234,11 @@ class Extractor(object):
                             collection = NodeCollection([PersonFeed(person) for person in response['Resources']])
                             return collection
 
-                        # Remove after tests
-                        collection = NodeCollection([PersonFeed(response)])
-                        return collection
-                        ###
+                    elif type == 'Group':
+                        response = await resp.json(content_type='application/json')
+                        if 'data' in response.keys():
+                            collection = NodeCollection([Group(group) for group in response['data']])
+                            return dict(collection=collection, next_page=response.get('paging', {}).get('next', None))
 
                     elif type == 'GroupFeed':
                         response = await resp.json(content_type='application/json')
@@ -179,14 +246,9 @@ class Extractor(object):
                             collection = NodeCollection([GroupFeed(group) for group in response['data']])
                             return dict(collection=collection, next_page=response.get('paging', {}).get('next', None))
 
-                        # Remove after tests
-                        collection = NodeCollection([GroupFeed(response)])
-                        return dict(collection=collection, next_page=None)
-                        ###
-
                     elif type == 'Bot':
                         response = await resp.json(content_type='application/json')
-                        return NodeCollection([BotFeed(response)])
+                        return Bot(response)
 
                     elif type == 'Post':
                         response = await resp.json(content_type='application/json')

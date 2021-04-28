@@ -1,7 +1,5 @@
 from workplace_extractor.Nodes import Node
-from workplace_extractor.Nodes import Group
 from workplace_extractor.Nodes.NodeCollection import PostCollection
-from workplace_extractor.Nodes.Author import Person, Bot
 
 import numpy as np
 
@@ -12,7 +10,6 @@ class Feed(Node):
         self.name = name
         self.posts = PostCollection()
         self.type = np.nan
-        self.owner = np.nan
 
     @property
     def name(self):
@@ -31,14 +28,6 @@ class Feed(Node):
         self._type = value
 
     @property
-    def owner(self):
-        return self._owner
-
-    @owner.setter
-    def owner(self, value):
-        self._owner = value
-
-    @property
     def posts(self):
         return self._posts
 
@@ -51,7 +40,6 @@ class Feed(Node):
             'id': self.id,
             'name': self.name,
             'type': self.type,
-            'owner': self.owner.to_dict(),
             'posts': [post.to_dict() for post in self.posts.nodes]
         }
 
@@ -62,7 +50,6 @@ class PersonFeed(Feed):
         name = data.get('name', {}).get('formatted', {})
 
         Feed.__init__(self, id, name)
-        self.owner = Person(data)
         self.type = 'person'
 
 
@@ -72,7 +59,6 @@ class GroupFeed(Feed):
         name = data.get('name', {})
 
         Feed.__init__(self, id, name)
-        self.owner = Group(data)
         self.type = 'group'
 
 
@@ -82,5 +68,4 @@ class BotFeed(Feed):
         name = data.get('name', {})
 
         Feed.__init__(self, id, name)
-        self.owner = Bot(data)
         self.type = 'group'

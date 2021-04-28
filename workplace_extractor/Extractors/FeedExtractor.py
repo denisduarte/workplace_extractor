@@ -1,3 +1,5 @@
+from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
+from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
 from workplace_extractor.Nodes import NodeCollection
 
 import numpy as np
@@ -28,47 +30,16 @@ class PersonFeedExtractor:
     async def extract(self, per_page=100):
         logging.info('Starting get_member_ids')
 
-        await self.fetch_total()
+        #call people extractor using a different callback function
+        people_extractor = PersonExtractor(self.extractor)
 
-        http_calls = {}
-        starts = np.arange(1, self.total + 1, step=per_page)
-        iterator = np.nditer(starts, flags=['f_index'])
-
-        people = NodeCollection()
-        for start in iterator:
-            http_calls[iterator.index] = {'url': f'{self.extractor.base_url_SCIM}?count={per_page}&startIndex={start}',
-                                          'callback': self.callback,
-                                          'results': people,
-                                          'params': None}
-
-        await self.extractor.fetch(http_calls)
-
-        logging.info(f'get_member_ids ended with {len(people.nodes)} members extracted')
+        people = await people_extractor.extract(callback=self.callback)
 
         return people
-
-    async def fetch_total(self):
-        total = []
-        http_calls = {0: {
-            'url': self.extractor.base_url_SCIM,
-            'callback': self.total_callback,
-            'results': total,
-            'params': None}}
-
-        await self.extractor.fetch(http_calls)
-
-        self.total = total[0]
-
-        logging.info(f'Total number of members: {self.total}')
 
     async def callback(self, url, results, params, session):
         data = await self.extractor.fetch_url(url, session, 'PersonFeed')
         results.extend(data)
-
-    async def total_callback(self, url, results, params, session):
-        data = await self.extractor.fetch_url(url, session, 'SCIM')
-
-        results.append(data['totalResults'])
 
 
 class GroupFeedExtractor:
@@ -88,14 +59,10 @@ class GroupFeedExtractor:
     async def extract(self, per_page=100):
         logging.info('Starting get_group_ids')
 
-        groups = NodeCollection()
-        http_calls = {0: {
-            'url': f'{self.extractor.base_url_GRAPH}/community/groups?fields=id,name&limit={per_page}',
-            'callback': self.callback,
-            'results': groups,
-            'params': None}}
+        #call people extractor using a different callback function
+        group_extractor = GroupExtractor(self.extractor)
 
-        await self.extractor.fetch(http_calls)
+        groups = await group_extractor.extract(callback=self.callback)
 
         logging.info(f'get_group_ids ended with groups extracted')
 

@@ -10,12 +10,14 @@ class Post(Node):
         self.created_time = data.get('created_time', np.nan)
         self.status_type = data.get('status_type', np.nan)
         self.object_id = data.get('object_id', np.nan)
-        self.link = data.get('link', np.nan)
+        self.object_link = data.get('link', np.nan)
         self.views = np.nan
         self.reactions = np.nan
         self.comments = np.nan
         self.author_id = data.get('from', {}).get('id', np.nan)
         self.author = None
+        self.message = True if data.get('message') else False
+        self.story = True if data.get('story') else False
 
     @property
     def partial_id(self):
@@ -58,12 +60,12 @@ class Post(Node):
         self._object_id = value
 
     @property
-    def link(self):
-        return self._link
+    def object_link(self):
+        return self._object_link
 
-    @link.setter
-    def link(self, value):
-        self._link = value
+    @object_link.setter
+    def object_link(self, value):
+        self._object_link = value
 
     @property
     def views(self):
@@ -97,6 +99,22 @@ class Post(Node):
     def author(self, value):
         self._author = value
 
+    @property
+    def message(self):
+        return self._message
+
+    @message.setter
+    def message(self, value):
+        self._message = value
+
+    @property
+    def story(self):
+        return self._story
+
+    @story.setter
+    def story(self, value):
+        self._story = value
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -105,12 +123,14 @@ class Post(Node):
             'created_time': self.created_time,
             'status_type': self.status_type,
             'object_id': self.object_id,
-            'link': self.link,
+            'object_link': self.object_link,
             'views': self.views,
             'reactions': self.reactions,
             'comments': self.comments,
             'author_id': self.author_id,
-            'author': self.author.to_dict() if self.author else None
+            'author': self.author.to_dict() if self.author else None,
+            'message': self.message,
+            'story': self.story
         }
 
 
