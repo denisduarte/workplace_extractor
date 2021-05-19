@@ -1,5 +1,5 @@
-from workplace_extractor.Nodes import Node
-from workplace_extractor.Nodes.Feed import GroupFeed
+from workplace_extractor.Nodes.Node import Node
+from workplace_extractor.Nodes.NodeCollection import PostCollection
 
 
 class Group(Node):
@@ -7,24 +7,22 @@ class Group(Node):
         Node.__init__(self, str(data.get('id')))
         self.name = data.get('name')
         self.privacy = data.get('privacy')
-        self.feed = GroupFeed(data)
+        self.admins = []
+        if data.get('admins', {}).get('data') is not None:
+            for admin in data.get('admins', {}).get('data'):
+                self.admins.append(admin['email'] if 'email' in admin else admin['id'])
 
-    @property
-    def name(self):
-        return self._name
+        self.feed = PostCollection()
 
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    def to_dict(self, export='posts'):
+    def to_dict(self, extractor):
         as_dict = {
-            'id': self.id,
+            'id': self.node_id,
             'name': self.name,
-            'privacy': self.privacy
+            'privacy': self.privacy,
+            'admins': self.admins
         }
 
-        if export == 'posts':
-            as_dict['feed'] = self.feed.to_dict() if self.feed is not None else {}
+        if extractor.export == 'POSTS':
+            as_dict['feed'] = [post.to_dict(extractor) for post in self.feed.nodes]
 
         return as_dict

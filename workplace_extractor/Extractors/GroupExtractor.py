@@ -1,4 +1,5 @@
-from workplace_extractor.Nodes.NodeCollection import GroupCollection
+from workplace_extractor.Nodes.NodeCollection import GroupCollection, NodeCollection
+from workplace_extractor.Nodes.Group import Group
 
 import numpy as np
 import logging
@@ -7,46 +8,30 @@ import logging
 class GroupExtractor:
     def __init__(self, extractor):
         self.total = np.nan
+        self.nodes = GroupCollection()
         self.extractor = extractor
 
-    @property
-    def total(self):
-        return self._total
-
-    @total.setter
-    def total(self, value):
-        self._total = value
-
-    @property
-    def extractor(self):
-        return self._extractor
-
-    @extractor.setter
-    def extractor(self, value):
-        self._extractor = value
-
-    async def extract(self, per_page=100, callback=None):
+    async def extract(self, per_page=100, call=None):
         logging.info('Starting groups extraction')
-        callback = self.callback if callback is None else callback
+        call = self.call if call is None else call
 
-        groups = GroupCollection()
-        http_calls = {0: {
-            'url': f'{self.extractor.base_url_GRAPH}/community/groups?fields=id,name,privacy&limit={per_page}',
-            'callback': callback,
-            'results': groups,
-            'params': None}}
+        http_calls = [{'url': f'{self.extractor.url_GRAPH}/community/groups?limit={per_page}' +
+                              '&fields=id,name,privacy,admins{email}',
+                       'call': call,
+                       'groups': self.nodes}]
 
         await self.extractor.fetch(http_calls)
 
-        logging.info(f'Groups Extraction ended with {len(groups.nodes)} groups extracted')
+        logging.info(f'Groups Extraction ended with {len(self.nodes.nodes)} groups extracted')
 
-        return groups
+    async def call(self, url, session, **kwargs):
+        data = await self.extractor.fetch_url(url, session, 'GRAPH')
 
-    async def callback(self, url, results, params, session):
-        data = await self.extractor.fetch_url(url, session, 'Group')
+        if 'data' in data and data['data']:
+            collection = NodeCollection([Group(group) for group in data['data']])
+            kwargs.get('groups').extend(collection)
 
-        if 'collection' in data and data['collection']:
-            results.extend(data['collection'])
+            next_page = data.get('paging', {}).get('next')
 
-        if 'next_page' in data and data['next_page']:
-            await self.callback(data['next_page'], results, params, session)
+            if next_page is not None:
+                await self.call(next_page, session, **kwargs)

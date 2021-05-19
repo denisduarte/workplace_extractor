@@ -1,12 +1,11 @@
 from workplace_extractor import Extractor
 import argparse
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Params')
     parser.add_argument("token", type=str,
                         help='The file containing the access token')
-    parser.add_argument('--export', choices=['POSTS', 'PEOPLE', 'GROUPS'], default='POSTS',
+    parser.add_argument('--export', choices=['POSTS', 'PEOPLE', 'GROUPS', 'INTERACTIONS'], default='POSTS',
                         help="what to export")
     parser.add_argument('--since', type=str, default='',
                         help='start date for the extraction of posts (YYYY-MM-DD)')

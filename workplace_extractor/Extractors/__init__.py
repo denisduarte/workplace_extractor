@@ -1,2 +1,1 @@
 from workplace_extractor.Extractors.PostExtractor import PostExtractor
-from workplace_extractor.Extractors.FeedExtractor import PersonFeedExtractor

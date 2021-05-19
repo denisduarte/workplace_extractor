@@ -1,13 +1,15 @@
-from workplace_extractor.Nodes import Node
-from workplace_extractor.Nodes.Feed import PersonFeed, GroupFeed, BotFeed
+from workplace_extractor.Nodes.Node import Node
+from workplace_extractor.Nodes.NodeCollection import PostCollection
+
 import numpy as np
 
 
 class Author(Node):
-    def __init__(self, id, name, type, title, active, division, department, email, emp_num, invited, claimed, feed):
-        Node.__init__(self, id)
+    def __init__(self, node_id, name, author_type, title, active, division, department, email, emp_num,
+                 invited, claimed, feed):
+        Node.__init__(self, node_id)
         self.name = name
-        self.type = type
+        self.author_type = author_type
         self.title = title
         self.active = active
         self.division = division
@@ -18,59 +20,11 @@ class Author(Node):
         self.claimed = claimed
         self.feed = feed
 
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
-    def type(self):
-        return self._type
-
-    @type.setter
-    def type(self, value):
-        self._type = value
-
-    @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, value):
-        self._title = value
-
-    @property
-    def active(self):
-        return self._active
-
-    @active.setter
-    def active(self, value):
-        self._active = value
-
-    @property
-    def division(self):
-        return self._division
-
-    @division.setter
-    def division(self, value):
-        self._division = value
-
-    @property
-    def department(self):
-        return self._department
-
-    @department.setter
-    def department(self, value):
-        self._department = value
-
-    def to_dict(self, export='posts'):
+    def to_dict(self, extractor):
         as_dict = {
-            'id': self.id,
+            'id': self.node_id,
             'name': self.name,
-            'type': self.type,
+            'type': self.author_type,
             'title': self.title,
             'active': self.active,
             'division': self.division,
@@ -81,20 +35,17 @@ class Author(Node):
             'claimed': self.claimed
         }
 
-        if export == 'posts':
-            as_dict['feed'] = self.feed.to_dict() if self.feed is not None else {}
+        if extractor.export == 'POSTS' and self.feed is not None:
+            as_dict['feed'] = [post.to_dict(extractor) for post in self.feed.nodes]
 
         return as_dict
 
 
 class Person(Author):
     def __init__(self, data):
-        id = str(data.get('id'))
-        if id == 'None':
-            print(1)
-
+        node_id = str(data.get('id'))
         name = data.get('name', {}).get('formatted', np.nan)
-        type = data.get('userType', np.nan)
+        author_type = data.get('userType', np.nan)
         title = data.get('title', np.nan)
         active = data.get('active', np.nan)
         division = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('division', np.nan)
@@ -103,17 +54,17 @@ class Person(Author):
         emp_num = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('employeeNumber', np.nan)
         invited = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('invited', np.nan)
         claimed = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('claimed', np.nan)
-        feed = PersonFeed(data)
+        feed = PostCollection()
 
-        Author.__init__(self, id, name, type, title, active, division,
+        Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, email, emp_num, invited, claimed, feed)
 
 
 class Bot(Author):
     def __init__(self, data):
-        id = str(data.get('id'))
+        node_id = str(data.get('id'))
         name = data.get('name', {})
-        type = 'Bot/Ext'
+        author_type = 'Bot/Ext'
         title = ''
         active = ''
         division = ''
@@ -122,7 +73,7 @@ class Bot(Author):
         emp_num = ''
         invited = ''
         claimed = ''
-        feed = BotFeed(data)
+        feed = PostCollection()
 
-        Author.__init__(self, id, name, type, title, active, division,
+        Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, email, emp_num, invited, claimed, feed)

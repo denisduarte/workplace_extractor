@@ -1,5 +1,8 @@
 /.idea/
 /venv/
+/output/
+/workplace_extractor/Extractors/test.txt
+/workplace_extractor/Nodes/temp.py
 *.token
 *.log
 *.txt
