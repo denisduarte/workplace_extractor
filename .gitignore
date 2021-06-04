@@ -8,3 +8,6 @@
 *.txt
 *.pickle
 *.csv
+
+*.c
+*.cpython-38-darwin.so

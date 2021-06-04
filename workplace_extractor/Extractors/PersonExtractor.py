@@ -22,7 +22,7 @@ class PersonExtractor:
         iterator = np.nditer(starts, flags=['f_index'])
 
         for start in iterator:
-            http_calls.append({'url': f'{self.extractor.url_SCIM}?count={per_page}&startIndex={start}',
+            http_calls.append({'url': self.extractor.config.get('URL', 'SCIM') + f'?count={per_page}&startIndex={start}',
                                'call': call,
                                'people': self.nodes})
 
@@ -32,7 +32,7 @@ class PersonExtractor:
 
     async def fetch_total(self):
         total = []
-        http_calls = [{'url': self.extractor.url_SCIM,
+        http_calls = [{'url': self.extractor.config.get('URL', 'SCIM'),
                        'call': self.call_total,
                        'total': total}]
 
@@ -42,7 +42,7 @@ class PersonExtractor:
         logging.info(f'Total number of members: {self.total}')
 
     async def call(self, url, session, **kwargs):
-        data = await self.extractor.fetch_url(url, session, 'SCIM')
+        data = await self.extractor.fetch_url(url, session, 'SCIM', **kwargs)
 
         collection = NodeCollection()
         if 'Resources' in data:
@@ -51,5 +51,5 @@ class PersonExtractor:
         kwargs.get('people').extend(collection)
 
     async def call_total(self, url, session, **kwargs):
-        data = await self.extractor.fetch_url(url, session, 'SCIM')
+        data = await self.extractor.fetch_url(url, session, 'SCIM', **kwargs)
         kwargs.get('total').append(data['totalResults'])

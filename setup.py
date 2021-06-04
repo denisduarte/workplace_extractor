@@ -8,13 +8,15 @@ setup(
     author='Denis Duarte',
     author_email='den.duarte@gmail.com',
     url='https://github.com/denisduarte/workplace_extractor',
-    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.6.9.tar.gz',
+    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.7.1.tar.gz',
     keywords=['extraction', 'posts', 'workplace'],
     install_requires=[
         'numpy>=1.20',
         'pandas>=1.2',
         'aiohttp>=3.7',
-        'asyncio>=3.4'
+        'asyncio>=3.4',
+        'networkx>=2.5.1',
+        'matplotlib>=3.4.2'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

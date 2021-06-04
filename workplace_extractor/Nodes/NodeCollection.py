@@ -53,12 +53,17 @@ class PostCollection(NodeCollection):
     def drop_duplicates(self, filter_ids):
         self.nodes = [item for item in self.nodes if item.partial_id not in filter_ids]
 
-    def to_pandas(self, extractor):
+    def filter_hashtags(self, hashtags):
 
+        if hashtags and hashtags != ['']:
+            self.nodes = [item for item in self.nodes if set(item.hashtags).intersection(set(hashtags))]
+
+    def to_pandas(self, extractor):
         df = None
         if extractor.export == 'POSTS':
             rows = []
-            for feed in self.nodes:
+            for index, feed in enumerate(self.nodes):
+                print(f'{index} of {len(self.nodes)}')
                 if feed.feed.nodes:
                     data_feed = feed.to_dict(extractor)
 
@@ -87,7 +92,7 @@ class PostCollection(NodeCollection):
             df['post_created_date'] = pd.to_datetime(df['post_created_time']).dt.date
             df['post_created_time'] = pd.to_datetime(df['post_created_time']).dt.time
 
-            base = 'https://petrobras.workplace.com'
+            base = extractor.config.get('URL', 'workplace')
 
             df['post_link'] = df.apply(
                 lambda x: f'{base}/groups/{x.post_id.split("_")[0]}/permalink/{x.post_id.split("_")[1]}/'
@@ -98,8 +103,8 @@ class PostCollection(NodeCollection):
                             'post_created_time', 'post_type', 'post_status_type', 'post_message', 'post_story',
                             'post_object_link', 'post_object_id', 'post_seen', 'post_reactions', 'post_comments',
                             'post_comments_reactions', 'post_replies', 'post_replies_reactions', 'post_link',
-                            'author_id', 'author_name', 'author_type', 'author_title', 'author_division',
-                            'author_department', 'author_active']
+                            'post_hashtags', 'author_id', 'author_name', 'author_type', 'author_title',
+                            'author_division', 'author_department', 'author_active']
 
             df = df[column_order]
 
@@ -125,44 +130,40 @@ class PostCollection(NodeCollection):
                                                    index=[post.author.node_id])
                             df = df.append(new_row)
 
-                        if post.comments.nodes:
-                            for comment in post.comments.nodes:
-                                count = df.at[post.author.node_id, 'comment'].get(comment.person.node_id, 0)
-                                df.at[post.author.node_id, 'comment'][comment.person.node_id] = count + 1
+                        for comment in post.comments['data'].nodes:
+                            count = df.at[post.author.node_id, 'comment'].get(comment.person.node_id, 0)
+                            df.at[post.author.node_id, 'comment'][comment.person.node_id] = count + 1
 
-                                if comment.comments.nodes:
-                                    for reply in comment.comments.nodes:
-                                        if comment.person.node_id not in df.id.tolist():
-                                            new_row = pd.DataFrame([{'id': comment.person.node_id,
-                                                                     'comment': {},
-                                                                     'reaction': {},
-                                                                     'view': {},
-                                                                     'comment_reply': {},
-                                                                     'comment_reaction': {}}],
-                                                                   index=[comment.person.node_id])
-                                            df = df.append(new_row)
+                            if comment.comments.nodes:
+                                for reply in comment.comments.nodes:
+                                    if comment.person.node_id not in df.id.tolist():
+                                        new_row = pd.DataFrame([{'id': comment.person.node_id,
+                                                                 'comment': {},
+                                                                 'reaction': {},
+                                                                 'view': {},
+                                                                 'comment_reply': {},
+                                                                 'comment_reaction': {}}],
+                                                               index=[comment.person.node_id])
+                                        df = df.append(new_row)
 
-                                            count = df.at[comment.person.node_id, 'comment_reply']\
-                                                      .get(reply.person.node_id, 0)
-                                            df.at[comment.person.node_id, 'comment_reply'][
-                                               reply.person.node_id] = count + 1
+                                        count = df.at[comment.person.node_id, 'comment_reply']\
+                                                  .get(reply.person.node_id, 0)
+                                        df.at[comment.person.node_id, 'comment_reply'][
+                                           reply.person.node_id] = count + 1
 
-                                        if reply.reactions:
-                                            for comment_reaction in post.reactions:
-                                                count = df.at[comment.person.node_id, 'comment_reaction']\
-                                                          .get(comment_reaction.person.node_id, 0)
-                                                df.at[comment.person.node_id, 'comment_reaction'][
-                                                   comment_reaction.person.node_id] = count + 1
+                                    for comment_reaction in post.reactions['data']:
+                                        count = df.at[comment.person.node_id, 'comment_reaction']\
+                                                  .get(comment_reaction.person.node_id, 0)
+                                        df.at[comment.person.node_id, 'comment_reaction'][
+                                           comment_reaction.person.node_id] = count + 1
 
-                        if post.reactions:
-                            for reaction in post.reactions:
-                                count = df.at[post.author.node_id, 'reaction'].get(reaction.person.node_id, 0)
-                                df.at[post.author.node_id, 'reaction'][reaction.person.node_id] = count + 1
+                        for reaction in post.reactions['data']:
+                            count = df.at[post.author.node_id, 'reaction'].get(reaction.person.node_id, 0)
+                            df.at[post.author.node_id, 'reaction'][reaction.person.node_id] = count + 1
 
-                        if post.seen:
-                            for view in post.seen:
-                                count = df.at[post.author.node_id, 'view'].get(view.person.node_id, 0)
-                                df.at[post.author.node_id, 'view'][view.person.node_id] = count + 1
+                        for view in post.seen['data']:
+                            count = df.at[post.author.node_id, 'view'].get(view.person.node_id, 0)
+                            df.at[post.author.node_id, 'view'][view.person.node_id] = count + 1
         return df
 
 

@@ -9,6 +9,7 @@ import logging
 import asyncio
 import aiohttp
 import pandas as pd
+import configparser
 
 
 class AuthTokenError(Exception):
@@ -17,21 +18,24 @@ class AuthTokenError(Exception):
 
 class Extractor(object):
 
-    semaphore = asyncio.Semaphore(300)
-
-    def __init__(self, token, export, since, until, csv, loglevel):
+    def __init__(self, token, export, hashtags, since, until, csv, loglevel):
         self.token = token
         self.export = export
+        self.hashtags = [hashtag.lower() for hashtag in hashtags.replace('#', '').split(',')]
         self.since = since
         self.until = until
         self.csv = csv
         self.loglevel = loglevel
-        self.url_GRAPH = 'https://graph.facebook.com'
-        self.url_SCIM = 'https://www.workplace.com/scim/v1/Users'
+
+        self.config = configparser.ConfigParser()
+        self.config.read("config.ini")
+
+        self.semaphore = asyncio.Semaphore(int(self.config.get('MISC', 'concurrent_calls')))
+        sys.setrecursionlimit(int(self.config.get('MISC', 'max_recursion')) * 2)
 
     async def init(self):
         # create folder to save output
-        output_folder = os.path.dirname('output/')
+        output_folder = os.path.dirname(self.config.get('MISC', 'output_dir'))
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
@@ -70,6 +74,12 @@ class Extractor(object):
             with open('output/workplace_interactions.pickle', 'wb') as handle:
                 pickle.dump(extractor.nodes, handle)
 
+            #with open('output/workplace_interactions.pickle', 'rb') as handle:
+            #    extractor.nodes = pickle.load(handle)
+
+            extractor.create_network_plot()
+
+
         logging.info(f'Converting to Pandas')
         nodes_pd = extractor.nodes.to_pandas(self)
         logging.info(f'Done converting to Pandas')
@@ -88,13 +98,13 @@ class Extractor(object):
             self.token = file.readline().rstrip()
 
         # check if access token is valid
-        http_call = [{'url': f'{self.url_GRAPH}/community/members?fields=id&limit=1',
+        http_call = [{'url': self.config.get('URL', 'GRAPH') + '/community/members?fields=id&limit=1',
                       'call': self.check_access_token}]
 
         await self.fetch(http_call)
 
     async def check_access_token(self, url, session, **kwargs):
-        data = await self.fetch_url(url, session, 'GRAPH')
+        data = await self.fetch_url(url, session, 'GRAPH', **kwargs)
 
         if 'data' in data and data['data']:
             logging.info('Access token check passed.')
@@ -120,12 +130,18 @@ class Extractor(object):
         async with self.semaphore:
             return await call(url, session, **kwargs)
 
-    @staticmethod
-    async def fetch_url(url, session, api=''):
+    async def fetch_url(self, url, session, api='', **kwargs):
         logging.debug(f'GET {url}')
+        logging.debug('Recursion ' + str(kwargs.get('recursion', 0)))
+
+        #to prevent GRAPH bug with infinite recursion
+        if kwargs.get('recursion', 0) > int(self.config.get('MISC', 'max_recursion')):
+            logging.error('TOO MUCH RECURSION - ignoring next pages')
+            logging.error(url)
+            return {}
 
         tries = 0
-        max_retries = 100
+        max_retries = int(self.config.get('MISC', 'max_http_retries'))
         while tries < max_retries:
             try:
                 tries += 1
@@ -148,7 +164,7 @@ class Extractor(object):
             except Exception as e:
                 logging.error(f'Exception when trying to process {url}. API: {api}')
                 logging.error(e)
-                logging.warning(f'Retrying {tries} of {max_retries}')
+                logging.warning(f' {tries} of {max_retries}')
 
         if tries == max_retries:
             raise TimeoutError('Too many retries')

@@ -1,7 +1,7 @@
 from workplace_extractor.Nodes.Node import Node
 from workplace_extractor.Nodes.NodeCollection import NodeCollection
 import numpy as np
-
+import re
 
 class Post(Node):
     def __init__(self, data):
@@ -20,8 +20,17 @@ class Post(Node):
         self.reactions = {'total': Summary(), 'data': []}
         self.comments = {'total': Summary(), 'data': NodeCollection()}
         self.comments_reactions = {'total': Summary(), 'data': []}
-        self.replies = {'total': Summary(), 'data': []}
+        self.replies = {'total': Summary(), 'data': NodeCollection()}
         self.replies_reactions = {'total': Summary(), 'data': []}
+        self.hashtags = self.extract_hashtags(data.get('message', ''))
+
+    # return a list with the hashtags used in the post in lowercase
+    @staticmethod
+    def extract_hashtags(text):
+        regex = '#(\w+)'
+        hashtag_list = re.findall(regex, text)
+
+        return [hashtag.lower() for hashtag in hashtag_list]
 
     def to_dict(self, extractor):
         out_dict = {
@@ -35,7 +44,8 @@ class Post(Node):
             'author_id': self.author_id,
             'author': self.author.to_dict(extractor) if self.author else None,
             'message': self.message,
-            'story': self.story
+            'story': self.story,
+            'hashtags':  ','.join(hashtag for hashtag in self.hashtags)
         }
 
         if extractor.export == 'INTERACTIONS':
