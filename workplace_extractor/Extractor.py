@@ -73,8 +73,6 @@ class Extractor(object):
         await extractor.extract()
         logging.info(f'Extraction of posts finished')
 
-        return 'aaaaaa2'
-
         if self.export == 'INTERACTIONS':
             with open(f'{self.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
                 pickle.dump(extractor.nodes, handle)
@@ -84,10 +82,12 @@ class Extractor(object):
 
             extractor.create_network_plot()
 
-
         logging.info(f'Converting to Pandas')
         nodes_pd = extractor.nodes.to_pandas(self)
         logging.info(f'Done converting to Pandas')
+
+        return nodes_pd.at[0, 'name']
+
         return nodes_pd
         # if a name for the csv file was passed, save the posts in csv format
         if self.csv:
