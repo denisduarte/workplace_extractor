@@ -59,8 +59,6 @@ class Extractor(object):
     async def _extract(self):
         await self.init()
 
-        return f'{self.config.get("MISC", "output_dir")}'
-
         extractor = None
         if self.export == 'POSTS':
             extractor = PostExtractor(extractor=self, since=self.since, until=self.until)
@@ -88,7 +86,7 @@ class Extractor(object):
         logging.info(f'Converting to Pandas')
         nodes_pd = extractor.nodes.to_pandas(self)
         logging.info(f'Done converting to Pandas')
-
+        return nodes_pd
         # if a name for the csv file was passed, save the posts in csv format
         if self.csv:
             nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
