@@ -20,7 +20,6 @@ class AuthTokenError(Exception):
 class Extractor(object):
 
     def __init__(self, token, config, export, hashtags, since, until, csv, loglevel):
-
         self.token = token
         self.export = export
         self.hashtags = [hashtag.lower() for hashtag in hashtags.replace('#', '').split(',')]
@@ -53,14 +52,13 @@ class Extractor(object):
             sys.exit(e)
 
     def extract(self):
-
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._extract())
+        return loop.run_until_complete(self._extract())
 
     async def _extract(self):
         await self.init()
 
-        return f'tk {self.token}'
+        return self.token
 
         extractor = None
         if self.export == 'POSTS':
@@ -100,7 +98,6 @@ class Extractor(object):
         return nodes_pd
 
     async def set_token(self):
-        print('aqui')
         with open(self.token) as file:
             self.token = file.readline().rstrip()
 
