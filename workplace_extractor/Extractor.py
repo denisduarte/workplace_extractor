@@ -86,9 +86,7 @@ class Extractor(object):
         nodes_pd = extractor.nodes.to_pandas(self)
         logging.info(f'Done converting to Pandas')
 
-        return nodes_pd.at[0, 'name']
 
-        return nodes_pd
         # if a name for the csv file was passed, save the posts in csv format
         if self.csv:
             nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
@@ -96,7 +94,7 @@ class Extractor(object):
 
         logging.info(f'Post extraction finished')
 
-        return nodes_pd
+        return 'nodes_pd'
 
     async def set_token(self):
         with open(self.token) as file:
