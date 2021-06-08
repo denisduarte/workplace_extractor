@@ -68,7 +68,7 @@ class Extractor(object):
             extractor = GroupExtractor(self)
         elif self.export == 'INTERACTIONS':
             extractor = PostExtractor(extractor=self, since=self.since, until=self.until)
-
+        return 'aaaaaa1'
         logging.info(f'Extracting posts from')
         await extractor.extract()
         logging.info(f'Extraction of posts finished')
