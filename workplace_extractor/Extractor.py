@@ -60,7 +60,7 @@ class Extractor(object):
     async def _extract(self):
         await self.init()
 
-        return self.token
+        return f'tk {self.token}'
 
         extractor = None
         if self.export == 'POSTS':
@@ -100,6 +100,7 @@ class Extractor(object):
         return nodes_pd
 
     async def set_token(self):
+        print('aqui')
         with open(self.token) as file:
             self.token = file.readline().rstrip()
 
