@@ -94,7 +94,7 @@ class Extractor(object):
 
         logging.info(f'Post extraction finished')
 
-        return 'nodes_pd'
+        return nodes_pd
 
     async def set_token(self):
         with open(self.token) as file:
