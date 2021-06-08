@@ -54,13 +54,13 @@ class Extractor(object):
 
     def extract(self):
 
-        return self.token
-
-        #loop = asyncio.get_event_loop()
-        #loop.run_until_complete(self._extract())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._extract())
 
     async def _extract(self):
         await self.init()
+
+        return self.token
 
         extractor = None
         if self.export == 'POSTS':
