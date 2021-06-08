@@ -10,6 +10,7 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
+import base64
 
 
 class AuthTokenError(Exception):
@@ -18,7 +19,8 @@ class AuthTokenError(Exception):
 
 class Extractor(object):
 
-    def __init__(self, token, export, hashtags, since, until, csv, loglevel):
+    def __init__(self, token, config, export, hashtags, since, until, csv, loglevel):
+
         self.token = token
         self.export = export
         self.hashtags = [hashtag.lower() for hashtag in hashtags.replace('#', '').split(',')]
@@ -28,7 +30,7 @@ class Extractor(object):
         self.loglevel = loglevel
 
         self.config = configparser.ConfigParser()
-        self.config.read("config.ini")
+        self.config.read(config)
 
         self.semaphore = asyncio.Semaphore(int(self.config.get('MISC', 'concurrent_calls')))
         sys.setrecursionlimit(int(self.config.get('MISC', 'max_recursion')) * 2)
@@ -39,9 +41,10 @@ class Extractor(object):
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                            filename='output/workplace_extractor.log',
-                            level=getattr(logging, self.loglevel))
+        if self.loglevel != 'NONE':
+            logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                                filename='output/workplace_extractor.log',
+                                level=getattr(logging, self.loglevel))
 
         # set the access token to be used in the http calls
         try:
@@ -50,8 +53,11 @@ class Extractor(object):
             sys.exit(e)
 
     def extract(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._extract())
+
+        return self.token
+
+        #loop = asyncio.get_event_loop()
+        #loop.run_until_complete(self._extract())
 
     async def _extract(self):
         await self.init()

@@ -7,7 +7,6 @@ from setuptools.command.build_py import build_py as _build_py
 
 from Cython.Build import cythonize
 
-
 EXCLUDE_FILES = [
     'main.py'
 ]
@@ -46,7 +45,7 @@ class build_py(_build_py):
 
 setup(
     name='workplace_extractor',
-    version='0.7.1',
+    version='0.7.1.10',
     packages=find_packages(),
     ext_modules=cythonize(
         get_ext_paths('workplace_extractor', EXCLUDE_FILES),

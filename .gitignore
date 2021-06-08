@@ -3,6 +3,7 @@
 /output/
 /workplace_extractor/Extractors/test.txt
 /workplace_extractor/Nodes/temp.py
+/setup2.py
 *.token
 *.log
 *.txt
