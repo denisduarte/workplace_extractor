@@ -37,12 +37,13 @@ class Extractor(object):
     async def init(self):
         # create folder to save output
         output_folder = os.path.dirname(self.config.get('MISC', 'output_dir'))
+
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
         if self.loglevel != 'NONE':
             logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                                filename='output/workplace_extractor.log',
+                                filename=f'{self.config.get("MISC", "output_dir")}/workplace_extractor.log',
                                 level=getattr(logging, self.loglevel))
 
         # set the access token to be used in the http calls
@@ -57,8 +58,6 @@ class Extractor(object):
 
     async def _extract(self):
         await self.init()
-
-        return self.token
 
         extractor = None
         if self.export == 'POSTS':
@@ -75,7 +74,7 @@ class Extractor(object):
         logging.info(f'Extraction of posts finished')
 
         if self.export == 'INTERACTIONS':
-            with open('output/workplace_interactions.pickle', 'wb') as handle:
+            with open(f'{self.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
                 pickle.dump(extractor.nodes, handle)
 
             #with open('output/workplace_interactions.pickle', 'rb') as handle:
@@ -91,7 +90,7 @@ class Extractor(object):
         # if a name for the csv file was passed, save the posts in csv format
         if self.csv:
             nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
-                 .to_csv(f'output/{self.csv}', index=False, sep=";")
+                 .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
 
         logging.info(f'Post extraction finished')
 
