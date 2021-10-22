@@ -1,1 +1,6 @@
 from workplace_extractor.Extractors.PostExtractor import PostExtractor
+from workplace_extractor.Extractors.CommentExtractor import CommentExtractor
+from workplace_extractor.Extractors.GroupExtractor import GroupExtractor, MembersExtractor
+from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
+from workplace_extractor.Extractors.InteractionExtractor import InteractionExtractor
+from workplace_extractor.Extractors.EventExtractor import EventExtractor

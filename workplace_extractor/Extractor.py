@@ -1,8 +1,7 @@
-from workplace_extractor.Extractors import PostExtractor
-from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
-from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
+from workplace_extractor.Extractors import PostExtractor, CommentExtractor, GroupExtractor, MembersExtractor
+from workplace_extractor.Extractors import PersonExtractor, InteractionExtractor, EventExtractor
 
-import pickle
+# import pickle
 import sys
 import os
 import logging
@@ -10,7 +9,6 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
-import base64
 
 
 class AuthTokenError(Exception):
@@ -19,19 +17,33 @@ class AuthTokenError(Exception):
 
 class Extractor(object):
 
-    def __init__(self, token, config, export, hashtags, since, until, csv, loglevel):
-        self.token = token
-        self.export = export
-        self.hashtags = [hashtag.lower() for hashtag in hashtags.replace('#', '').split(',')]
-        self.since = since
-        self.until = until
-        self.csv = csv
-        self.loglevel = loglevel
+    def __init__(self, **kwargs):
 
+        print(kwargs)
+
+        # the colnfig.ini file should be in the same folder as the app
         self.config = configparser.ConfigParser()
-        self.config.read(config)
+        self.config.read('config.ini')
 
+        # required options
+        self.token = self.config.get('MISC', 'access_token')
+        self.loglevel = self.config.get('MISC', 'loglevel')
+
+        self.export = kwargs.get('export')
+        self.csv = kwargs.get('csv')
+        self.export_content = kwargs.get('export_content', False)
+        self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
+
+        # optional options
+        args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id',
+                'active_only', 'create_ranking', 'create_gexf']
+        for key, value in kwargs.items():
+            if key in args:
+                setattr(self, key, value)
+
+        # setting semaphore to control the number of concurrent calls
         self.semaphore = asyncio.Semaphore(int(self.config.get('MISC', 'concurrent_calls')))
+        # setting recursion limit to prevent python from interrumpting large calls
         sys.setrecursionlimit(int(self.config.get('MISC', 'max_recursion')) * 2)
 
     async def init(self):
@@ -60,39 +72,39 @@ class Extractor(object):
         await self.init()
 
         extractor = None
-        if self.export == 'POSTS':
-            extractor = PostExtractor(extractor=self, since=self.since, until=self.until)
-        elif self.export == 'PEOPLE':
-            extractor = PersonExtractor(self)
-        elif self.export == 'GROUPS':
-            extractor = GroupExtractor(self)
-        elif self.export == 'INTERACTIONS':
-            extractor = PostExtractor(extractor=self, since=self.since, until=self.until)
+        if self.export == 'Posts':
+            extractor = PostExtractor(extractor=self)
+        elif self.export == 'Comments':
+            extractor = CommentExtractor(extractor=self)
+        elif self.export == 'People':
+            extractor = PersonExtractor(extractor=self)
+        elif self.export == 'Groups':
+            extractor = GroupExtractor(extractor=self)
+        elif self.export == 'Members':
+            extractor = MembersExtractor(extractor=self)
+        elif self.export == 'Attendees':
+            extractor = EventExtractor(extractor=self)
+        elif self.export == 'Interactions':
+            extractor = InteractionExtractor(extractor=self)
 
-        logging.info(f'Extracting posts from')
+        print("Extracting data... ")
         await extractor.extract()
-        logging.info(f'Extraction of posts finished')
+        print("DONE")
 
-        if self.export == 'INTERACTIONS':
-            with open(f'{self.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
-                pickle.dump(extractor.nodes, handle)
+        # with open(f'{self.config.get("MISC", "output_dir")}/workplace_event.pickle', 'wb') as handle:
+        #    pickle.dump(extractor.nodes, handle)
 
-            #with open('output/workplace_interactions.pickle', 'rb') as handle:
-            #    extractor.nodes = pickle.load(handle)
+        # with open(f'{self.config.get("MISC", "output_dir")}/workplace_event.pickle', 'rb') as handle:
+        #    self.feeds = pickle.load(handle)
 
-            extractor.create_network_plot()
-
-        logging.info(f'Converting to Pandas')
+        print("Converting results... ", end=" ")
         nodes_pd = extractor.nodes.to_pandas(self)
-        logging.info(f'Done converting to Pandas')
+        print("DONE")
 
-
-        # if a name for the csv file was passed, save the posts in csv format
-        if self.csv:
-            nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
-                 .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
-
-        logging.info(f'Post extraction finished')
+        print("Saving CSV file... ", end=' ')
+        nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
+                .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
+        print("DONE")
 
         return nodes_pd
 
@@ -107,18 +119,19 @@ class Extractor(object):
         await self.fetch(http_call)
 
     async def check_access_token(self, url, session, **kwargs):
-        data = await self.fetch_url(url, session, 'GRAPH', **kwargs)
+        print("Checking access token...", end=" ")
 
-        if 'data' in data and data['data']:
-            logging.info('Access token check passed.')
-        else:
-            logging.error('The access token is invalid. Halting Execution.')
+        data = await self.fetch_url(url, session, 'GRAPH', **kwargs)
+        if not('data' in data and data['data']):
+            logging.error('FAILED')
             raise AuthTokenError('Invalid access token')
+
+        print('DONE')
 
     async def fetch(self, http_calls):
         headers = {'Authorization': f'Bearer {self.token}',
-                   'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/89.0.4389.114 Safari/537.36',
+                   # 'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36'
+                   #               ' (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36',
                    'Content-Type': 'application/json'}
 
         async with aiohttp.ClientSession(headers=headers) as session:
@@ -137,7 +150,7 @@ class Extractor(object):
         logging.debug(f'GET {url}')
         logging.debug('Recursion ' + str(kwargs.get('recursion', 0)))
 
-        #to prevent GRAPH bug with infinite recursion
+        # to prevent GRAPH bug with infinite recursion
         if kwargs.get('recursion', 0) > int(self.config.get('MISC', 'max_recursion')):
             logging.error('TOO MUCH RECURSION - ignoring next pages')
             logging.error(url)
@@ -171,3 +184,11 @@ class Extractor(object):
 
         if tries == max_retries:
             raise TimeoutError('Too many retries')
+
+    @staticmethod
+    def str_to_bool(str_arg):
+        str_arg = str_arg.upper()
+        if str_arg == 'TRUE':
+            return True
+        elif str_arg == 'FALSE':
+            return False

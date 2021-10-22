@@ -3,8 +3,9 @@ from workplace_extractor.Nodes.NodeCollection import NodeCollection
 import numpy as np
 import re
 
+
 class Post(Node):
-    def __init__(self, data):
+    def __init__(self, data, extractor):
         Node.__init__(self, str(data.get('id')))
         self.partial_id = np.nan
         self.post_type = data.get('type', np.nan)
@@ -14,7 +15,12 @@ class Post(Node):
         self.object_link = data.get('link', np.nan)
         self.author_id = data.get('from', {}).get('id', np.nan)
         self.author = None
-        self.message = True if data.get('message') else False
+
+        if extractor.export_content:
+            self.message = data.get('message')
+        else:
+            self.message = True if data.get('message') else False
+
         self.story = True if data.get('story') else False
         self.seen = {'total': Summary(), 'data': []}
         self.reactions = {'total': Summary(), 'data': []}
@@ -27,7 +33,7 @@ class Post(Node):
     # return a list with the hashtags used in the post in lowercase
     @staticmethod
     def extract_hashtags(text):
-        regex = '#(\w+)'
+        regex = '#(\\w+)'
         hashtag_list = re.findall(regex, text)
 
         return [hashtag.lower() for hashtag in hashtag_list]
@@ -42,10 +48,10 @@ class Post(Node):
             'object_id': self.object_id,
             'object_link': self.object_link,
             'author_id': self.author_id,
-            'author': self.author.to_dict(extractor) if self.author else None,
+            'author': self.author.to_dict(extractor, origin='post') if self.author else None,
             'message': self.message,
             'story': self.story,
-            'hashtags':  ','.join(hashtag for hashtag in self.hashtags)
+            'hashtags': ','.join(hashtag for hashtag in self.hashtags)
         }
 
         if extractor.export == 'INTERACTIONS':
@@ -65,7 +71,6 @@ class Post(Node):
 
 class Summary:
     def __init__(self, data=None):
-
         if data is None:
             data = {}
 

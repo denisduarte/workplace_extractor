@@ -1,73 +1,113 @@
 from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
 from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
+
 from workplace_extractor.Nodes.NodeCollection import PostCollection
 from workplace_extractor.Nodes.Author import Bot
 from workplace_extractor.Nodes.Post import Summary, Post
 from workplace_extractor.Nodes.Interaction import View, Reaction, Comment
 
-from copy import copy
-import logging
+from workplace_extractor.Counter import Counter
 
-import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib
-from random import randint
+import logging
 
 
 class PostExtractor:
-    def __init__(self, extractor, since, until):
+    def __init__(self, extractor):
         self.extractor = extractor
-        self.since = since
-        self.until = until
+        # ensure that the extractor has all required attributes
+        ensure_attribute = ['since', 'until', 'author_id', 'feed_id']
+        for attribute in ensure_attribute:
+            if not hasattr(self.extractor, attribute):
+                setattr(self.extractor, attribute, '')
+
         self.nodes = PostCollection()
         self.filter_ids = []
+        self.counter = Counter('Posts')
 
     async def extract(self):
-        logging.info('Loading group feeds')
+        # fields that should be extracted from posts using the GRAPH API
+        fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
 
+        # Extract all groups
+        logging.info('Loading group feeds')
         group_extractor = GroupExtractor(self.extractor)
         await group_extractor.extract()
         self.nodes.extend(group_extractor.nodes)
         logging.info('Group feeds loaded')
 
+        # Extract all workplace members
         logging.info('Loading person feeds')
         people_extractor = PersonExtractor(self.extractor)
         await people_extractor.extract()
         self.nodes.extend(people_extractor.nodes)
         logging.info('Person feeds loaded')
 
-        # fields that should be extracted from posts using the GRAPH API
-        fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
+        if feed_id := self.extractor.feed_id:
+            # if an feed_id was passed, extract only posts published in this feed
 
-        logging.info(f'Extracting posts from {len(group_extractor.nodes.nodes)} groups.')
-        http_calls = []
-        for node in group_extractor.nodes.nodes:
-            http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
-                                                                                  f'&fields={fields}'
-                                                                                  f'&since={self.since}'
-                                                                                  f'&until={self.until}',
-                               'call': self.call,
-                               'node': node,
-                               'recursion': 1})
+            logging.info(f'Extracting posts from feed {feed_id}')
 
-        await self.extractor.fetch(http_calls)
+            # check if its a group feed
+            node = next((node for node in group_extractor.nodes.nodes if node.node_id == feed_id), None)
 
-        logging.info(f'Extracting posts from {len(people_extractor.nodes.nodes)} people.')
-        http_calls = []
-        for node in people_extractor.nodes.nodes:
-            http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
-                                                                                  f'&fields={fields}'
-                                                                                  f'&since={self.since}'
-                                                                                  f'&until={self.until}',
-                               'call': self.call,
-                               'node': node,
-                               'recursion': 1})
-        await self.extractor.fetch(http_calls)
+            # check if its a person feed
+            if node is None:
+                node = next((node for node in people_extractor.nodes.nodes if node.node_id == feed_id), None)
 
-        count = 0
-        for node in self.nodes.nodes:
-            count += len(node.feed.nodes)
+            if node is None:
+                # feed not found. halting.
+                exit(0)
+
+            http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+                                                                              f'&fields={fields}'
+                                                                              f'&since={self.extractor.since}'
+                                                                              f'&until={self.extractor.until}',
+                           'call': self.call,
+                           'node': node,
+                           'recursion': 1}]
+
+            self.counter.label = 'Feed'
+            self.counter.total = len(http_calls)
+
+            await self.extractor.fetch(http_calls)
+        else:
+            # if no feed_id was passed, extract posts from all feeds (groups and members)
+
+            logging.info(f'Extracting posts from {len(group_extractor.nodes.nodes)} groups.')
+            http_calls = []
+            for node in group_extractor.nodes.nodes:
+                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+                                                                                      f'&fields={fields}'
+                                                                                      f'&since={self.extractor.since}'
+                                                                                      f'&until={self.extractor.until}',
+                                   'call': self.call,
+                                   'node': node,
+                                   'recursion': 1})
+
+            self.counter.label = 'Group feeds'
+            self.counter.total = len(http_calls)
+
+            await self.extractor.fetch(http_calls)
+
+            """"""
+            logging.info(f'Extracting posts from {len(people_extractor.nodes.nodes)} people.')
+            http_calls = []
+            for node in people_extractor.nodes.nodes:
+                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+                                                                                      f'&fields={fields}'
+                                                                                      f'&since={self.extractor.since}'
+                                                                                      f'&until={self.extractor.until}',
+                                   'call': self.call,
+                                   'node': node,
+                                   'recursion': 1})
+
+            self.counter.label = 'Person feeds'
+            self.counter.total = len(http_calls)
+            self.counter.count = 0
+
+            await self.extractor.fetch(http_calls)
+
+            """"""
 
         # Add view, reactions, comments and authors
         await self.fetch_posts_info()
@@ -94,7 +134,7 @@ class PostExtractor:
                                                                        'reactions.limit(100).summary(1)'
                                                                        '}'
                                                                        '}',
-                    'call': self.call_info if self.extractor.export == 'INTERACTIONS' else self.call_count,
+                    'call': self.call_info if self.extractor.export == 'Interactions' else self.call_count,
                     'post': post,
                     'recursion': 1})
 
@@ -102,22 +142,28 @@ class PostExtractor:
 
                 # including Bots
                 if author is not None:
-                    author = copy(author)
-                    author.feed = None
-
                     post.author = author
                 else:
                     http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{post.author_id}',
                                        'call': self.call_bot,
                                        'post': post})
 
+        self.counter.label = 'Post info'
+        self.counter.total = len(http_calls)
+        self.counter.count = 0
+
         await self.extractor.fetch(http_calls)
 
     async def call(self, url, session, **kwargs):
+        recursion = kwargs.copy()['recursion']
+
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
-        if 'data' in data and data['data']:
-            collection = PostCollection([Post(post) for post in data['data']])
+        if 'id' in data:
+            data = {'data': [data]}
+
+        if 'data' in data and data.get('data'):
+            collection = PostCollection([Post(post, self.extractor) for post in data.get('data')])
 
             # filter posts already extracted. Applies to posts in both group and author feed and for
             # GRAPH bug with infinite loop.
@@ -128,6 +174,10 @@ class PostExtractor:
             if self.extractor.hashtags:
                 collection.filter_hashtags(self.extractor.hashtags)
 
+            # if person_id not empty, filter result by author
+            if self.extractor.author_id:
+                collection.filter_author(self.extractor.author_id)
+
             kwargs.get('node').feed.extend(collection)
             self.add_to_filter(collection.nodes)
 
@@ -136,6 +186,10 @@ class PostExtractor:
                 kwargs['recursion'] += 1
                 await self.call(next_page, session, **kwargs)
 
+        if recursion == 1:
+            self.counter.increment()
+            print(self.counter)
+
     async def call_info(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
@@ -143,7 +197,11 @@ class PostExtractor:
         await self.call_info_reactions(data.get('reactions', {}), session, **kwargs)
         await self.call_info_comments(data.get('comments', {}), session, **kwargs)
 
+        self.counter.increment()
+        print(self.counter)
+
     async def call_info_views(self, data, session, **kwargs):
+
         if 'data' in data:
             for item in data['data']:
                 view = View()
@@ -159,6 +217,7 @@ class PostExtractor:
             await self.call_info_views(new_data, session, **kwargs)
 
     async def call_info_reactions(self, data, session, **kwargs):
+
         if 'data' in data:
             for item in data['data']:
                 reaction = Reaction(item)
@@ -174,10 +233,13 @@ class PostExtractor:
             await self.call_info_reactions(new_data, session, **kwargs)
 
     async def call_info_comments(self, data, session, **kwargs):
+        if isinstance(data, list):
+            data = {'data': data}
+
         if 'data' in data:
             for item in data['data']:
                 comment = Comment(item)
-                self.set_author(item, comment, kwargs.get('type'))
+                self.set_author(item, comment, 'comments')
 
                 if item.get('reactions', {}).get('data'):
                     data_reactions = item.get('reactions', {})
@@ -244,7 +306,12 @@ class PostExtractor:
         if data:
             kwargs.get('post').author = Bot(data)
 
+        self.counter.increment()
+        print(self.counter)
+
     async def call_count(self, url, session, **kwargs):
+        recursion = kwargs.copy()['recursion']
+
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
         for summary_type in ('comments', 'reactions', 'seen'):
@@ -312,6 +379,10 @@ class PostExtractor:
                     summary = Summary({'total_count': replies_reactions})
                     getattr(kwargs.get('post'), 'replies_reactions')['total'] = summary
 
+        if recursion == 1:
+            self.counter.increment()
+            print(self.counter)
+
     def add_to_filter(self, posts):
         for post in posts:
             self.filter_ids.append(post.partial_id)
@@ -324,75 +395,9 @@ class PostExtractor:
         else:
             author = next((node for node in self.nodes.nodes if node.node_id == data.get('id')), None)
 
-        author = copy(author)
+        # author = copy(author)
         if author is None:
             author = Bot(data.get('from', {}))
-
         author.feed = None
 
         interaction.person = author
-
-    def create_network_plot(self):
-        net = nx.Graph()
-
-        for node in self.nodes.nodes:
-            if node.feed.nodes:
-                for post in node.feed.nodes:
-                    if post.comments['data'] is not None and post.comments['data'].nodes:
-                        for comment in post.comments['data'].nodes:
-                            net.add_node(post.author.node_id,
-                                         color=getattr(post.author, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(post.author, self.extractor.config.get('PLOT', 'label_field')))
-                            net.add_node(comment.person.node_id,
-                                         color=getattr(comment.person, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(comment.person, self.extractor.config.get('PLOT', 'label_field')))
-                            net.add_edge(post.author.node_id, comment.person.node_id)
-
-                    if post.reactions['data'] is not None and post.reactions['data']:
-                        for reaction in post.reactions['data']:
-                            net.add_node(post.author.node_id,
-                                         color=getattr(post.author, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(post.author, self.extractor.config.get('PLOT', 'label_field')))
-                            net.add_node(reaction.person.node_id,
-                                         color=getattr(reaction.person, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(reaction.person, self.extractor.config.get('PLOT', 'label_field')))
-                            net.add_edge(post.author.node_id, reaction.person.node_id)
-
-        print(f'nodes = {net.number_of_nodes()}')
-        print(f'edges = {net.number_of_edges()}')
-
-        page_rank = nx.pagerank(net)
-
-        colors = pd.DataFrame({node: net.nodes()[node]['color'] for node in net.nodes()}, index=[0]).transpose()
-        colors = colors.rename(columns={0: 'color'})
-        colors['color'] = pd.Categorical(colors['color'])
-        color = ['#%06X' % randint(0, 0xFFFFFF) for i in range(len(colors['color'].unique().tolist()))]
-        # noinspection PyUnresolvedReferences
-        cmap = matplotlib.colors.ListedColormap(color)
-
-        options = {
-            'width': 0.1,
-            'node_size': [page_rank[node] * 1000 for node in net.nodes()],
-            'node_color': colors['color'].cat.codes,
-            'cmap': cmap,
-            'with_labels': False
-        }
-
-        plt.figure()
-        pos_nodes = nx.kamada_kawai_layout(net)
-
-        nx.draw(net, pos_nodes, **options)
-
-        pos_attrs = {}
-        for node, coords in pos_nodes.items():
-            pos_attrs[node] = (coords[0], coords[1] + 0.04)
-
-        options = {
-            'labels': {node: net.nodes()[node]['label'] if page_rank[node] > 0.005 else '' for node in net.nodes()},
-            'font_size': 7,
-            'font_color': 'red'
-        }
-
-        nx.draw_networkx_labels(net, pos_attrs, **options)
-        plt.savefig(self.extractor.config.get('MISC', 'output_dir') + 'interactions_plot.png')
-        plt.show()

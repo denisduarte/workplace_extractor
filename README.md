@@ -8,9 +8,11 @@
 # Overview
 The Workplace Extractor package was written to allow a complete extraction of posts form a Workplace installation. It provides the following key features:
 
-* Access to the SCIM and GRAPH API provided by Facebook
-* Asyncronous calls to increase speed
-* Posts are exported to a CSV file
+* Access to the SCIM and GRAPH API provided by Facebook;
+* Asyncronous calls to increase speed;
+* Lists of **posts**, **members**, **groups**, **comments**, **event attendees** are exported to CSV files;
+* A ranking of most relevant members can be created based on the number of interctions (comments and reactions)
+* The interaction network can be wxported to a GEXF file;
 
 # Usage
 In the following paragraphs, I am going to describe how you can get and use Scrapeasy for your own projects.
@@ -30,13 +32,12 @@ from workplace_extractor import Extractor
 wp_extractor = Extractor(token, since, until, csv, loglevel)
 ```
 
-The `Extractor` class expects the following parameters:
+**You ust have an access token with full access to both SCIM and GRAPH API in order to the extraction to work**
 
-* **token** - path to a file containing the access token
-* **since** - the starting date for the extraction. Use the YYYY-MM-DD format.
-* **until** - the ending date (exclusive) for the extraction. Use the YYYY-MM-DD format.
-* **csv** - path of the CSV file that will be created at the end of the extraction
-* **loglevel** - the lev used by `logging`. Should be one of ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']. A file called `workplace_extractor.log` will be created in the same folder as your Python program
+A config.ini file con be used to set some key parameters. Two required ones are:
+
+* **output_dir** - path the folder where the output will be stored
+* **access_token** - path to a file containing the Workplace access token
 
 # Warning
 As many http calls are made during the export process, your program may take a while to finish, depending on the size of your Workplace installation. As a reference, on an installation with around 85,000 users, 3,000 groups and 110,000 posts the exectution takes around 4 hours to complete.

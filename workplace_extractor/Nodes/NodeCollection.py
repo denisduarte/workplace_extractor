@@ -26,6 +26,13 @@ class NodeCollection:
     def drop_non_authors(self):
         self.nodes = [node for node in self.nodes if node.posts.nodes]
 
+    def filter_author(self, author_id):
+        self.nodes = [item for item in self.nodes if item.author_id == author_id]
+
+    def filter_hashtags(self, hashtags):
+        if hashtags != ['']:
+            self.nodes = [item for item in self.nodes if set(item.hashtags).intersection(set(hashtags))]
+
     def extend(self, items):
         if isinstance(items, NodeCollection):
             self.nodes.extend(items.nodes)
@@ -53,14 +60,9 @@ class PostCollection(NodeCollection):
     def drop_duplicates(self, filter_ids):
         self.nodes = [item for item in self.nodes if item.partial_id not in filter_ids]
 
-    def filter_hashtags(self, hashtags):
-
-        if hashtags and hashtags != ['']:
-            self.nodes = [item for item in self.nodes if set(item.hashtags).intersection(set(hashtags))]
-
     def to_pandas(self, extractor):
         df = None
-        if extractor.export == 'POSTS':
+        if extractor.export == 'Posts':
             rows = []
             for index, feed in enumerate(self.nodes):
                 print(f'{index} of {len(self.nodes)}')
@@ -103,7 +105,7 @@ class PostCollection(NodeCollection):
                             'post_created_time', 'post_type', 'post_status_type', 'post_message', 'post_story',
                             'post_object_link', 'post_object_id', 'post_seen', 'post_reactions', 'post_comments',
                             'post_comments_reactions', 'post_replies', 'post_replies_reactions', 'post_link',
-                            'post_hashtags', 'author_id', 'author_name', 'author_type', 'author_title',
+                            'post_hashtags', 'author_id', 'author_email', 'author_name', 'author_type', 'author_title',
                             'author_division', 'author_department', 'author_active']
 
             df = df[column_order]
@@ -115,7 +117,7 @@ class PostCollection(NodeCollection):
             df['post_replies'] = df['post_replies'].astype('Int64')
             df['post_replies_reactions'] = df['post_replies_reactions'].astype('Int64')
 
-        elif extractor.export == 'INTERACTIONS':
+        elif extractor.export == 'Interactions':
             df = pd.DataFrame(columns=['id', 'comment', 'reaction', 'view', 'comment_reply', 'comment_reaction'])
             for feed in self.nodes:
                 if feed.feed.nodes:
@@ -167,6 +169,52 @@ class PostCollection(NodeCollection):
         return df
 
 
+class CommentCollection(NodeCollection):
+    def to_pandas(self, extractor):
+
+        comments = []
+        for item in self.nodes:
+            comment = self.comment_to_dict(item, extractor)
+            comment['parent_id'] = None
+
+            comments.append(comment)
+            for subitem in item.comments.nodes:
+                reply = self.comment_to_dict(subitem, extractor)
+                reply['parent_id'] = comment.get('id')
+
+                comments.append(reply)
+
+        column_order = ['id', 'parent_id', 'message', 'reactions', 'comments', 'author_id', 'author_name',
+                        'author_email', 'author_type', 'author_title', 'author_key', 'author_department']
+
+        df = pd.DataFrame(comments)
+        df = df[column_order]
+
+        return df
+        
+    @staticmethod
+    def comment_to_dict(comment, extractor):
+        comment_dict = comment.to_dict(extractor)
+
+        total_reactions = len(comment.reactions)
+        comment_dict['reactions'] = total_reactions
+
+        total_replies = len(comment.comments.nodes)
+        comment_dict['comments'] = total_replies
+
+        comment_dict['author_id'] = comment_dict.get('person', {}).get('id')
+        comment_dict['author_name'] = comment_dict.get('person', {}).get('name')
+        comment_dict['author_email'] = comment_dict.get('person', {}).get('email')
+        comment_dict['author_type'] = comment_dict.get('person', {}).get('type')
+        comment_dict['author_title'] = comment_dict.get('person', {}).get('title')
+        comment_dict['author_key'] = comment_dict.get('person', {}).get('emp_num')
+        comment_dict['author_department'] = comment_dict.get('person', {}).get('department')
+
+        del comment_dict['person']
+        
+        return comment_dict
+        
+
 class PeopleCollection(NodeCollection):
     def to_pandas(self, extractor):
         data_dict = [person.to_dict(extractor) for person in self.nodes]
@@ -179,3 +227,37 @@ class GroupCollection(NodeCollection):
         data_dict = [group.to_dict(extractor) for group in self.nodes]
 
         return pd.DataFrame(data_dict)
+
+
+class EventCollection(NodeCollection):
+    def to_pandas(self, extractor):
+
+        event = self.nodes[0]
+
+        if event:
+            evento_dict = event.to_dict(extractor)
+
+            row_evento = pd.DataFrame([{key: evento_dict[key] for key in evento_dict.keys() - ['owner', 'attendees']}])
+            row_evento = row_evento.add_prefix('event_')
+
+            owner_dict = evento_dict.get('owner')
+            row_owner = pd.DataFrame([{key: owner_dict[key] for key in owner_dict.keys()}])
+            row_owner = row_owner.add_prefix('owner_')
+
+            row_evento_owner = pd.concat([row_evento, row_owner], axis=1)
+
+            rows_attendees = []
+            for attendee in evento_dict.get('attendees'):
+                row_attendee = pd.DataFrame([{key: attendee[key] for key in attendee.keys()}])
+                row_attendee = row_attendee.add_prefix('attendee_')
+
+                rows_attendees.append(row_attendee)
+
+            df = row_evento_owner.merge(pd.concat(rows_attendees), how="cross")
+
+            return df
+
+
+class InteractionCollection(NodeCollection):
+    def to_pandas(self, extractor):
+        return self.nodes

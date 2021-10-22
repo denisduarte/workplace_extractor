@@ -2,13 +2,13 @@ from distutils.core import setup
 setup(
     name='workplace_extractor',
     packages=['workplace_extractor', 'workplace_extractor.Nodes', 'workplace_extractor.Extractors'],
-    version='0.7.16.7',
+    version='0.8.0',
     license='MIT',
     description='Extract posts created in a corporate Workplace by Facebook installation using the Graph API',
     author='Denis Duarte',
     author_email='den.duarte@gmail.com',
     url='https://github.com/denisduarte/workplace_extractor',
-    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.7.16.7.tar.gz',
+    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.8.0.tar.gz',
     keywords=['extraction', 'posts', 'workplace'],
     install_requires=[
         'numpy>=1.20',
@@ -16,7 +16,8 @@ setup(
         'aiohttp>=3.7',
         'asyncio>=3.4',
         'networkx>=2.5.1',
-        'matplotlib>=3.4.2'
+        'matplotlib>=3.4.2',
+        'Gooey>=1.0.8.1'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
