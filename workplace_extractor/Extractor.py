@@ -19,7 +19,7 @@ class Extractor(object):
 
     def __init__(self, **kwargs):
 
-        print(kwargs)
+        # print(kwargs)
 
         # the colnfig.ini file should be in the same folder as the app
         self.config = configparser.ConfigParser()
@@ -36,7 +36,8 @@ class Extractor(object):
 
         # optional options
         args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id',
-                'active_only', 'create_ranking', 'create_gexf']
+                'active_only', 'create_ranking', 'create_gexf', 'node_attributes', 'additional_node_attributes',
+                'joining_column']
         for key, value in kwargs.items():
             if key in args:
                 setattr(self, key, value)

@@ -20,20 +20,21 @@ class InteractionExtractor:
         self.extractor = extractor
 
         self.feeds = PostCollection()
-        # self.net = since
+        self.net = None
+        self.pagerank = None
 
         self.nodes = InteractionCollection()
 
     async def extract(self):
         post_extractor = PostExtractor(self.extractor)
-        await post_extractor.extract()
-        self.feeds = post_extractor.nodes
+        #await post_extractor.extract()
+        #self.feeds = post_extractor.nodes
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions-newnew.pickle', 'wb') as handle:
-            pickle.dump(self.feeds, handle)
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
+        #    pickle.dump(self.feeds, handle)
 
-        # with open('/Users/denisduarte/Petrobras/PythonProjects/workplace_extractor/output2/workplace_interactions-newnew.pickle', 'rb') as handle:
-        #    self.feeds = pickle.load(handle)
+        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
+            self.feeds = pickle.load(handle)
 
         user_summary = self.build_user_summary()
         self.net = self.build_net()
@@ -49,7 +50,20 @@ class InteractionExtractor:
 
     def build_net(self, include_inactive=False):
 
-        diretorias = pd.read_excel(f'{self.extractor.config.get("MISC", "output_dir")}/dDiretorias.xlsx')
+        ### Create list of node attributes
+
+        # Attributes coming from the extraction
+        node_attribute_list = []
+        if self.extractor.node_attributes:
+            node_attribute_list = self.extractor.node_attributes.split(',')
+
+        # Additional attributes coming from a external file
+        additional_attributes = pd.read_csv(self.extractor.additional_node_attributes, sep=';')
+
+        node_additional_attribute_list = additional_attributes.columns.values.tolist()
+        node_additional_attribute_list.remove(self.extractor.joining_column)
+
+        ### Build the net
 
         net = nx.Graph()
         for node in self.feeds.nodes:
@@ -57,46 +71,31 @@ class InteractionExtractor:
                 for post in node.feed.nodes:
                     if post.author.node_id != 'None' and (post.author.active or include_inactive):
 
-                        author_diretoria = ''
-                        try:
-                            division = diretorias['Área'] == getattr(post.author, 'division')
-                            author_diretoria = diretorias.loc[division, 'Diretoria'].iloc[0]
-                        except:
-                            pass
-
                         if post.comments['data'] is not None and post.comments['data'].nodes:
+
+                            if post.author.node_id == '100042062288427':
+                                print(1)
+
+                            '100042113136103'
+
                             net.add_node(post.author.node_id,
-                                         color=getattr(post.author, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(post.author, self.extractor.config.get('PLOT', 'label_field')),
-                                         diretoria=author_diretoria,
-                                         division=getattr(post.author, 'division'),
-                                         department=getattr(post.author, 'department'),
-                                         name=getattr(post.author, 'name'),
-                                         emp_num=getattr(post.author, 'emp_num'),
-                                         email=getattr(post.author, 'email'))
+                                         **self.list_node_attributes(post.author, self.extractor,
+                                                                     node_attribute_list,
+                                                                     node_additional_attribute_list,
+                                                                     additional_attributes))
 
                             for comment in post.comments['data'].nodes:
                                 # remove external users
                                 if comment.person.node_id != 'None' and (comment.person.active or include_inactive):
 
-                                    comment_diretoria = ''
-                                    try:
-                                        division = diretorias['Área'] == getattr(comment.person, 'division')
-                                        comment_diretoria = diretorias.loc[division, 'Diretoria'].iloc[0]
-                                    except:
-                                        pass
+                                    if comment.person.node_id == '100042062288427':
+                                        print(1)
 
                                     net.add_node(comment.person.node_id,
-                                                 color=getattr(comment.person,
-                                                               self.extractor.config.get('PLOT', 'color_field')),
-                                                 label=getattr(comment.person,
-                                                               self.extractor.config.get('PLOT', 'label_field')),
-                                                 diretoria=comment_diretoria,
-                                                 division=getattr(comment.person, 'division'),
-                                                 department=getattr(comment.person, 'department'),
-                                                 name=getattr(comment.person, 'name'),
-                                                 emp_num=getattr(comment.person, 'emp_num'),
-                                                 email=getattr(comment.person, 'email'))
+                                                 **self.list_node_attributes(comment.person, self.extractor,
+                                                                             node_attribute_list,
+                                                                             node_additional_attribute_list,
+                                                                             additional_attributes))
 
                                     if net.has_edge(post.author.node_id, comment.person.node_id):
                                         # we added this one before, just increase the weight by one
@@ -107,38 +106,27 @@ class InteractionExtractor:
 
                         if post.reactions['data'] is not None and post.reactions['data'] and post.author.node_id != 'None':
 
+                            if post.author.node_id == '100042062288427':
+                                print(1)
+
                             net.add_node(post.author.node_id,
-                                         color=getattr(post.author, self.extractor.config.get('PLOT', 'color_field')),
-                                         label=getattr(post.author, self.extractor.config.get('PLOT', 'label_field')),
-                                         diretoria=author_diretoria,
-                                         division=getattr(post.author, 'division'),
-                                         department=getattr(post.author, 'department'),
-                                         name=getattr(post.author, 'name'),
-                                         emp_num=getattr(post.author, 'emp_num'),
-                                         email=getattr(post.author, 'email'))
+                                         **self.list_node_attributes(post.author, self.extractor,
+                                                                     node_attribute_list,
+                                                                     node_additional_attribute_list,
+                                                                     additional_attributes))
 
                             for reaction in post.reactions['data']:
                                 # remove external users
                                 if reaction.person.node_id != 'None' and (reaction.person.active or include_inactive):
 
-                                    reaction_diretoria = ''
-                                    try:
-                                        division = diretorias['Área'] == getattr(reaction.person, 'division')
-                                        reaction_diretoria = diretorias.loc[division, 'Diretoria'].iloc[0]
-                                    except:
-                                        pass
+                                    if reaction.person.node_id == '100042062288427':
+                                        print(1)
 
                                     net.add_node(reaction.person.node_id,
-                                                 color=getattr(reaction.person,
-                                                               self.extractor.config.get('PLOT', 'color_field')),
-                                                 label=getattr(reaction.person,
-                                                               self.extractor.config.get('PLOT', 'label_field')),
-                                                 diretoria=reaction_diretoria,
-                                                 division=getattr(reaction.person, 'division'),
-                                                 department=getattr(reaction.person, 'department'),
-                                                 name=getattr(reaction.person, 'name'),
-                                                 emp_num=getattr(reaction.person, 'emp_num'),
-                                                 email=getattr(reaction.person, 'email'))
+                                                 **self.list_node_attributes(reaction.person, self.extractor,
+                                                                             node_attribute_list,
+                                                                             node_additional_attribute_list,
+                                                                             additional_attributes))
 
                                     if net.has_edge(post.author.node_id, reaction.person.node_id):
                                         # we added this one before, just increase the weight by one
@@ -209,6 +197,7 @@ class InteractionExtractor:
         ranking.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
                .to_csv(f'{self.extractor.config.get("MISC", "output_dir")}/rank_{ranking_type}.csv', index=False, sep=";")
 
+    """
     def create_network_plot(self):
 
         net = deepcopy(self.net)
@@ -288,6 +277,7 @@ class InteractionExtractor:
         plt.savefig(self.extractor.config.get('MISC', 'output_dir') + 'interactions_plot.png')
 
         plt.show()
+   """
 
     def build_user_summary(self):
         df = pd.DataFrame(columns=['posts', 'post_reactions', 'post_views',
@@ -337,3 +327,21 @@ class InteractionExtractor:
         data.loc[data['user_id'] == user.node_id, action] += 1
 
         return data
+
+    @staticmethod
+    def list_node_attributes(node, extractor,
+                             node_attribute_list, node_additional_attribute_list, additional_attributes):
+
+        attributes = {}
+
+        for attribute in node_attribute_list:
+            attributes[attribute] = getattr(node, attribute)
+
+        current_row_loc = additional_attributes[extractor.joining_column] == getattr(
+            node, extractor.joining_column)
+
+        for attribute in node_additional_attribute_list:
+            if not additional_attributes.loc[current_row_loc, attribute].empty:
+                attributes[attribute] = additional_attributes.loc[current_row_loc, attribute].iloc[0]
+
+        return attributes

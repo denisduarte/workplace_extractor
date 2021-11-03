@@ -15,7 +15,6 @@ The Workplace Extractor package was written to allow a complete extraction of po
 * The interaction network can be wxported to a GEXF file;
 
 # Usage
-In the following paragraphs, I am going to describe how you can get and use Scrapeasy for your own projects.
 
 ### Installation
 To get the Workplace Extractor package, either fork this github repo or use Pypi via pip.
@@ -24,15 +23,44 @@ $ pip install workplace_extractor
 ```
 ### How to use it
 
-First, you should import the `Extractor` class from the package, then create an extractor object
+This package uses [argparse](https://docs.python.org/3/library/argparse.html) and [Gooey](https://github.com/chriskiehl/Gooey) to create an into end-user-friendly GUI application. Just run the app and a dialog will show up asking for the input parameters.
 
-```sh
-from workplace_extractor import Extractor
+THe application will offer some extraction options:
 
-wp_extractor = Extractor(token, since, until, csv, loglevel)
-```
+1. **POSTS** - used for extracting all posts published in a given period of time or feed, from a given author etc.
 
-**You ust have an access token with full access to both SCIM and GRAPH API in order to the extraction to work**
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%201%20-%20Posts.png" width="402" height="337">
+
+
+2. **Comments** - used for extracting all comments made in a post.
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%202%20-%20Comments.png" width="402" height="337">
+
+
+3. **People** - used for extracting all Workplace users.
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%203%20-%20People.png" width="402" height="337">
+
+
+4. **Groups** - used for all groups.
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%204%20-%20Groups.png" width="402" height="337">
+
+
+5. **Members** - used for extracting all members of a group
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%205%20-%20Members.png" width="402" height="337">
+
+6. **Attendees** - used for extracting all attendees of an event.
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%206%20-%20Attendees.png" width="402" height="337">
+
+7. **Interactions** - used for extracting interactions among all workplace users. This option can be used can be used with a network visualization solution, such as [Gephi](https://gephi.org/), for further analysis.
+
+    <img src="https://raw.githubusercontent.com/denisduarte/midia/main/Workplace%20App%207%20-%20Interactions.png" width="402" height="337">
+
+
+**You must have an access token with full access to both SCIM and GRAPH API in order to the extraction to work**
 
 A config.ini file con be used to set some key parameters. Two required ones are:
 

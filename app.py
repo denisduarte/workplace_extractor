@@ -1,5 +1,7 @@
 from workplace_extractor import Extractor
 from gooey import Gooey, GooeyParser
+from flask import Flask
+app = Flask(__name__)
 
 """"""
 @Gooey(advanced=True,
@@ -77,7 +79,8 @@ def read_arguments():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+@app.route("/")
+def run():
     args = read_arguments()
     wp_extractor = Extractor(**vars(args))
 
@@ -86,6 +89,10 @@ if __name__ == "__main__":
             'additional_node_attributes': '/Users/denisduarte/Petrobras/PythonProjects/workplace_extractor/output/'
                                           'diretorias.csv',
             'joining_column': 'division', 'author_id': ''}
-    #wp_extractor = Extractor(**args)
+    # wp_extractor = Extractor(**args)
 
     wp_extractor.extract()
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
