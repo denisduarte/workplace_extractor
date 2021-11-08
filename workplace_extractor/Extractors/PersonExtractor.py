@@ -43,10 +43,6 @@ class PersonExtractor:
         if self.extractor.active_only:
             self.nodes.nodes = [person for person in self.nodes.nodes if person.active]
 
-
-
-
-
         # logging.info(f'People Extraction ended with {len(self.nodes.nodes)} members extracted')
 
     async def fetch_total(self):
