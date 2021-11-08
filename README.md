@@ -23,9 +23,18 @@ $ pip install workplace_extractor
 ```
 ### How to use it
 
-This package uses [argparse](https://docs.python.org/3/library/argparse.html) and [Gooey](https://github.com/chriskiehl/Gooey) to create an into end-user-friendly GUI application. Just run the app and a dialog will show up asking for the input parameters.
+You can simple run a python script with the code below:
 
-THe application will offer some extraction options:
+```sh
+import workplace_extractor
+
+workplace_extractor.run()
+```
+
+
+This package uses [argparse](https://docs.python.org/3/library/argparse.html) and [Gooey](https://github.com/chriskiehl/Gooey) to create an end-user-friendly front end GUI application. Just run the app and a dialog will show up asking for the input parameters.
+
+The application will offer some extraction options:
 
 1. **POSTS** - used for extracting all posts published in a given period of time or feed, from a given author etc.
 
