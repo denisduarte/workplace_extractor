@@ -20,11 +20,11 @@ class InteractionExtractor:
 
     async def extract(self):
         post_extractor = PostExtractor(self.extractor)
-        #await post_extractor.extract()
-        #self.feeds = post_extractor.nodes
+        await post_extractor.extract()
+        self.feeds = post_extractor.nodes
 
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
-        #    pickle.dump(self.feeds, handle)
+        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
+            pickle.dump(self.feeds, handle)
 
         #with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
         #     self.feeds = pickle.load(handle)
