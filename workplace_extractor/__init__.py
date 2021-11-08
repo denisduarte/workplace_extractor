@@ -1,1 +1,2 @@
 from workplace_extractor.Extractor import Extractor
+from workplace_extractor.Extractor import run

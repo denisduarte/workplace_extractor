@@ -2,14 +2,14 @@ from distutils.core import setup
 setup(
     name='workplace_extractor',
     packages=['workplace_extractor', 'workplace_extractor.Nodes', 'workplace_extractor.Extractors'],
-    version='0.8.1',
+    version='0.8.2',
     license='MIT',
-    description='Extract posts created in a corporate Workplace by Facebook installation using the Graph and SCIM APIs',
-    long_description='Extract posts created in a corporate Workplace by Facebook installation using Graph and SCIM APIs',
+    description='Extract posts created in a corporate Workplace by Facebook installation using the Graph/SCIM APIs',
+    long_description='Extract posts created in a corporate Workplace by Facebook installation using Graph/SCIM APIs',
     author='Denis Duarte',
     author_email='den.duarte@gmail.com',
     url='https://github.com/denisduarte/workplace_extractor',
-    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.8.1.tar.gz',
+    download_url='https://github.com/denisduarte/workplace_extractor/archive/refs/tags/v_0.8.2.tar.gz',
     keywords=['extraction', 'posts', 'workplace'],
     install_requires=[
         'numpy>=1.20',
