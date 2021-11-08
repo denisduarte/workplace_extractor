@@ -1,18 +1,11 @@
-from copy import deepcopy
-
 from workplace_extractor.Nodes.NodeCollection import PostCollection, NodeCollection, InteractionCollection
 from workplace_extractor.Extractors import PostExtractor
 
 
 import pandas as pd
-import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
-# import matplotlib
-# from random import randint
 import pickle
 import operator
-# import math
 
 
 class InteractionExtractor:
@@ -33,8 +26,8 @@ class InteractionExtractor:
         # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
         #    pickle.dump(self.feeds, handle)
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
-            self.feeds = pickle.load(handle)
+        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
+        #     self.feeds = pickle.load(handle)
 
         user_summary = self.build_user_summary()
         self.net = self.build_net()
@@ -72,12 +65,6 @@ class InteractionExtractor:
                     if post.author.node_id != 'None' and (post.author.active or include_inactive):
 
                         if post.comments['data'] is not None and post.comments['data'].nodes:
-
-                            if post.author.node_id == '100042062288427':
-                                print(1)
-
-                            '100042113136103'
-
                             net.add_node(post.author.node_id,
                                          **self.list_node_attributes(post.author, self.extractor,
                                                                      node_attribute_list,
@@ -87,10 +74,6 @@ class InteractionExtractor:
                             for comment in post.comments['data'].nodes:
                                 # remove external users
                                 if comment.person.node_id != 'None' and (comment.person.active or include_inactive):
-
-                                    if comment.person.node_id == '100042062288427':
-                                        print(1)
-
                                     net.add_node(comment.person.node_id,
                                                  **self.list_node_attributes(comment.person, self.extractor,
                                                                              node_attribute_list,
@@ -105,10 +88,6 @@ class InteractionExtractor:
                                         net.add_edge(post.author.node_id, comment.person.node_id, weight=1)
 
                         if post.reactions['data'] is not None and post.reactions['data'] and post.author.node_id != 'None':
-
-                            if post.author.node_id == '100042062288427':
-                                print(1)
-
                             net.add_node(post.author.node_id,
                                          **self.list_node_attributes(post.author, self.extractor,
                                                                      node_attribute_list,
@@ -118,10 +97,6 @@ class InteractionExtractor:
                             for reaction in post.reactions['data']:
                                 # remove external users
                                 if reaction.person.node_id != 'None' and (reaction.person.active or include_inactive):
-
-                                    if reaction.person.node_id == '100042062288427':
-                                        print(1)
-
                                     net.add_node(reaction.person.node_id,
                                                  **self.list_node_attributes(reaction.person, self.extractor,
                                                                              node_attribute_list,
@@ -196,88 +171,6 @@ class InteractionExtractor:
 
         ranking.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
                .to_csv(f'{self.extractor.config.get("MISC", "output_dir")}/rank_{ranking_type}.csv', index=False, sep=";")
-
-    """
-    def create_network_plot(self):
-
-        net = deepcopy(self.net)
-
-        max_rank = max(self.pagerank.items(), key=operator.itemgetter(1))[1]
-
-        remove = [node for node, rank in self.pagerank.items() if rank < max_rank * 0.05]
-
-        centrality = sorted(self.pagerank.items(), key=operator.itemgetter(1), reverse=True)
-
-        max_nodes = 200
-        max_index = min([max_nodes, net.number_of_nodes()-1])
-
-        remove = [node for node, rank in self.pagerank.items() if rank < centrality[max_index][1]]
-        net.remove_nodes_from(remove)
-
-        node_ref = self.extractor.person_id
-
-        # neighbours = [node for node in net.neighbors(node_ref)]
-        # neighbours.append(node_ref)
-        # remove = [node for node, rank in self.pagerank.items() if node not in neighbours]
-        # net.remove_nodes_from(remove)
-
-        # remove = [node for node, rank in self.pagerank.items() if rank < max_rank * 0.05]
-        # net.remove_nodes_from(remove)
-
-        colors = pd.DataFrame({node: net.nodes()[node]['diretoria'] for node in net.nodes()}, index=[0]).transpose()
-        colors = colors.rename(columns={0: 'color'})
-        colors['color'] = pd.Categorical(colors['color'])
-
-        maxval = len(set(colors['color'].cat.codes))
-
-        cmap = plt.cm.Spectral
-
-        options = {
-            'width': 0.1,
-            'node_size': [min(self.pagerank[node] * 5000, 500) for node in net.nodes()],
-            'node_color': [cmap(1.5*v/maxval) for v in colors['color'].cat.codes],
-            'cmap': cmap,
-            'with_labels': False,
-            'edge_color': (0, 0, 0, 0.9),
-            'edgecolors': (0, 0, 0, 0.9),
-            'linewidths': 0.1
-        }
-
-        plt.figure()
-        pos_nodes = nx.circular_layout(net)
-        pos_nodes[node_ref] = np.array([0, 0])
-
-        for node in pos_nodes:
-            if node != node_ref:
-                # print(net[node_ref][node]['weight'])
-                wt = net[node_ref][node]['weight']
-                wt = float(wt)
-                pos_nodes[node] /= np.log10(wt**wt)+1
-
-        nx.draw(net, pos_nodes, **options)
-
-        pos_attrs = {}
-        for node, coords in pos_nodes.items():
-            pos_attrs[node] = (coords[0], coords[1] + 0.04)
-
-        options = {
-            'labels': {node: net.nodes()[node]['label'] if self.pagerank[node] >= max_rank * 0.5 else '' for node in net.nodes()},
-            'font_size': 7,
-            'font_color': 'red'
-        }
-
-        nx.draw_networkx_labels(net, pos_attrs, **options)
-
-        for v in set(colors['color'].cat.codes):
-            plt.scatter([], [], c=[cmap(1.5*v / maxval)], label=colors['color'].cat.categories[v])
-
-        plt.legend()
-        plt.show()
-
-        plt.savefig(self.extractor.config.get('MISC', 'output_dir') + 'interactions_plot.png')
-
-        plt.show()
-   """
 
     def build_user_summary(self):
         df = pd.DataFrame(columns=['posts', 'post_reactions', 'post_views',
