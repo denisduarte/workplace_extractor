@@ -19,9 +19,6 @@ class AuthTokenError(Exception):
 class Extractor(object):
 
     def __init__(self, **kwargs):
-
-        # print(kwargs)
-
         # the colnfig.ini file should be in the same folder as the app
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
@@ -31,7 +28,7 @@ class Extractor(object):
         self.loglevel = self.config.get('MISC', 'loglevel')
 
         self.export = kwargs.get('export')
-        self.csv = kwargs.get('csv')
+        self.export_file = kwargs.get('export_file')
         self.export_content = kwargs.get('export_content', False)
         self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
 
@@ -93,22 +90,25 @@ class Extractor(object):
         await extractor.extract()
         print("DONE")
 
-        # with open(f'{self.config.get("MISC", "output_dir")}/workplace_event.pickle', 'wb') as handle:
-        #    pickle.dump(extractor.nodes, handle)
-
-        # with open(f'{self.config.get("MISC", "output_dir")}/workplace_event.pickle', 'rb') as handle:
-        #    self.feeds = pickle.load(handle)
 
         print("Converting results... ", end=" ")
         nodes_pd = extractor.nodes.to_pandas(self)
         print("DONE")
 
-        print("Saving CSV file... ", end=' ')
-        nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
-                .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
-        print("DONE")
+        try:
+            print("Saving CSV file... ", end=' ')
+            # .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
+            nodes_pd = nodes_pd.applymap(lambda x: x.encode('unicode_escape')
+                                                     .decode('utf-8') if isinstance(x, str) else x)
+            nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
+                    .to_excel(f'{self.config.get("MISC", "output_dir")}/{self.export_file}', sheet_name='Results', index=False)
+            print("DONE")
 
-        return nodes_pd
+            return nodes_pd
+        except:
+            print(1)
+
+
 
     async def set_token(self):
         with open(self.token) as file:
@@ -185,7 +185,8 @@ class Extractor(object):
                 logging.warning(f' {tries} of {max_retries}')
 
         if tries == max_retries:
-            raise TimeoutError('Too many retries')
+            #raise TimeoutError('Too many retries')
+            logging.critical(f'Response returned ERROR 500 for {url}.')
 
     @staticmethod
     def str_to_bool(str_arg):
@@ -201,15 +202,13 @@ class run():
         args = self.read_arguments()
         wp_extractor = Extractor(**vars(args))
 
-        args = {'export': 'Interactions', 'csv': 'exported_data.csv', 'since': '', 'until': '', 'create_ranking': False,
-                'create_gexf': True, 'node_attributes': 'division,department,name',
-                'additional_node_attributes': '/Users/denisduarte/Petrobras/PythonProjects/workplace_extractor/output/'
-                                              'diretorias.csv',
-                'joining_column': 'division', 'author_id': ''}
-        # wp_extractor = Extractor(**args)
+        #args = {'export': 'Interactions', 'export_file': 'exported_data.xlsx', 'since': '2022-01-15', 'until': '2022-04-15', 'create_ranking': True, 'create_gexf': True, 'node_attributes': 'division,department,name,emp_num,email,title,manager_level,author_type', 'additional_node_attributes': '/Users/denisduarte/Petrobras/PythonProjects/output/diretorias.csv', 'joining_column': 'division', 'author_id': ''}
+        #args = {'export': 'Posts', 'export_file': 'exported_data-dtdi-jan_fev.xlsx', 'since': '2022-01-01', 'until': '2022-03-01', 'export_content': True}
+        #wp_extractor = Extractor(**args)
 
         wp_extractor.extract()
 
+    """"""
     @Gooey(advanced=True,
            default_size=(800, 610),
            program_name='Workplace Extractor',
@@ -224,7 +223,7 @@ class run():
 
         # EXPORT POSTS
         post_parser = subparsers.add_parser("Posts")
-        post_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        post_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         post_parser.add_argument('-since', type=str, default='',
                                  help='Start date for the extraction of posts (YYYY-MM-DD)',
                                  widget='DateChooser')
@@ -242,31 +241,31 @@ class run():
 
         # EXPORT COMMENTS
         comment_parser = subparsers.add_parser("Comments")
-        comment_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        comment_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         comment_parser.add_argument('post_id', type=str, default='', help="The ID of the post")
 
         # EXPORT PEOPLE
         people_parser = subparsers.add_parser("People")
-        people_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        people_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         people_parser.add_argument('-active_only', action='store_true', help="Exports only currentcly active members")
 
         # EXPORT GROUPS
         groups_parser = subparsers.add_parser("Groups")
-        groups_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        groups_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
 
         # EXPORT GROUP MEMBERS
         members_parser = subparsers.add_parser("Members")
-        members_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        members_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         members_parser.add_argument('group_id', type=str, default='', help="The ID of the group")
 
         # EXPORT EVENT PARTICIPANTS
         members_parser = subparsers.add_parser("Attendees")
-        members_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        members_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         members_parser.add_argument('event_id', type=str, default='', help="The ID of the event")
 
         # EXPORT INTERACTIONS
         interactions_parser = subparsers.add_parser("Interactions")
-        interactions_parser.add_argument('csv', type=str, default='exported_data.csv', help='Name of the CSV file.')
+        interactions_parser.add_argument('export_file', type=str, default='exported_data.xlsx', help='Name of the export file.')
         interactions_parser.add_argument('-since', type=str, default='',
                                          help='Start date for the extraction of posts (YYYY-MM-DD)',
                                          widget='DateChooser')
@@ -274,10 +273,10 @@ class run():
                                          help='End date for the extraction of posts (YYYY-MM-DD)', widget='DateChooser')
         interactions_parser.add_argument('-create_ranking', action='store_true', help="Create user ranking")
         interactions_parser.add_argument('-create_gexf', action='store_true', help="Create GEXF file")
-        interactions_parser.add_argument('-node_attributes', type=str, default='division,department,name',
-                                         help='Name of the CSV file.')
+        interactions_parser.add_argument('-node_attributes', type=str, default='division,department,name,emp_num,email',
+                                         help='Name of the export file.')
         interactions_parser.add_argument('-additional_node_attributes', type=str, default='',
-                                         help='Path to a CSV containing columns to be merged')
+                                         help='Path to a export containing columns to be merged')
         interactions_parser.add_argument('-joining_column', type=str, default='',
                                          help='Column to be used for joining')
         interactions_parser.add_argument('-author_id', type=str, default='',

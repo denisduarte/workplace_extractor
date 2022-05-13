@@ -1,3 +1,5 @@
+import pandas as pd
+
 from workplace_extractor.Nodes.Node import Node
 from workplace_extractor.Nodes.NodeCollection import PostCollection
 from datetime import datetime
@@ -6,12 +8,13 @@ import numpy as np
 
 
 class Author(Node):
-    def __init__(self, node_id, name, author_type, title, active, division, department, building, email, emp_num,
-                 invited, invite_date, claimed, feed):
+    def __init__(self, node_id, name, author_type, title, manager_level, active, division, department, building, email,
+                 emp_num, invited, invite_date, claimed, feed):
         Node.__init__(self, node_id)
         self.name = name
         self.author_type = author_type
         self.title = title
+        self.manager_level = manager_level
         self.active = active
         self.division = division
         self.department = department
@@ -29,6 +32,7 @@ class Author(Node):
             'name': self.name,
             'type': self.author_type,
             'title': self.title,
+            'manager_level': self.manager_level,
             'active': self.active,
             'division': self.division,
             'department': self.department,
@@ -47,12 +51,20 @@ class Author(Node):
 
 
 class Person(Author):
+
+    funcoes = None
+
     def __init__(self, data):
+
+        if Person.funcoes is None:
+            Person.funcoes = pd.read_csv('/Users/denisduarte/Petrobras/PythonProjects/output/funcoes.csv', sep=';')
+
         node_id = str(data.get('id'))
         name = data.get('name', {}).get('formatted', np.nan)
         author_type = data.get('userType', np.nan)
         email = data.get('userName', np.nan)
         title = data.get('title', np.nan)
+        manager_level = self.manager_level(title)
         active = data.get('active', np.nan)
         division = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('division', np.nan)
         department = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('department', np.nan)
@@ -65,19 +77,36 @@ class Person(Author):
         date = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('inviteDate', np.nan)
         invite_date = datetime.utcfromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')
 
-
         claimed = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('claimed', np.nan)
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, active, division,
+        Author.__init__(self, node_id, name, author_type, title, manager_level, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
 
+    @staticmethod
+    def manager_level(title):
+
+        try:
+            title = '' if pd.isna(title) else title
+        except Exception as e:
+            print(1)
+
+        try:
+            manager_level = Person.funcoes[Person.funcoes['Função'] == title.lower()]['Nível'].values[0]
+
+        except IndexError:
+            manager_level = 'Sem função gratificada'
+        except Exception as e:
+            print(1)
+
+        return manager_level
 
 class Bot(Author):
     def __init__(self, data):
         node_id = str(data.get('id'))
         name = data.get('name', {})
         author_type = 'Bot/Ext'
+        manager_level = ''
         title = ''
         active = ''
         division = ''
@@ -90,5 +119,5 @@ class Bot(Author):
         claimed = ''
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, active, division,
+        Author.__init__(self, node_id, name, author_type, title, manager_level, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)

@@ -27,6 +27,7 @@ class PostExtractor:
     async def extract(self):
         # fields that should be extracted from posts using the GRAPH API
         fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
+        per_page = 50
 
         # Extract all groups
         logging.info('Loading group feeds')
@@ -58,7 +59,8 @@ class PostExtractor:
                 # feed not found. halting.
                 exit(0)
 
-            http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+            http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
+                                                                              f'?limit={per_page}'
                                                                               f'&fields={fields}'
                                                                               f'&since={self.extractor.since}'
                                                                               f'&until={self.extractor.until}',
@@ -76,7 +78,8 @@ class PostExtractor:
             logging.info(f'Extracting posts from {len(group_extractor.nodes.nodes)} groups.')
             http_calls = []
             for node in group_extractor.nodes.nodes:
-                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
+                                                                                      f'?limit={per_page}'
                                                                                       f'&fields={fields}'
                                                                                       f'&since={self.extractor.since}'
                                                                                       f'&until={self.extractor.until}',
@@ -93,7 +96,8 @@ class PostExtractor:
             logging.info(f'Extracting posts from {len(people_extractor.nodes.nodes)} people.')
             http_calls = []
             for node in people_extractor.nodes.nodes:
-                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed?limit=100'
+                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
+                                                                                      f'?limit={per_page}'
                                                                                       f'&fields={fields}'
                                                                                       f'&since={self.extractor.since}'
                                                                                       f'&until={self.extractor.until}',
@@ -116,6 +120,7 @@ class PostExtractor:
 
     async def fetch_posts_info(self):
         http_calls = []
+
         for node in self.nodes.nodes:
             for post in node.feed.nodes:
                 http_calls.append({
@@ -159,36 +164,37 @@ class PostExtractor:
 
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
-        if 'id' in data:
-            data = {'data': [data]}
+        if data is not None:
+            if 'id' in data:
+                data = {'data': [data]}
 
-        if 'data' in data and data.get('data'):
-            collection = PostCollection([Post(post, self.extractor) for post in data.get('data')])
+            if 'data' in data and data.get('data'):
+                collection = PostCollection([Post(post, self.extractor) for post in data.get('data')])
 
-            # filter posts already extracted. Applies to posts in both group and author feed and for
-            # GRAPH bug with infinite loop.
-            collection.set_partial_id()
-            collection.drop_duplicates(self.filter_ids)
+                # filter posts already extracted. Applies to posts in both group and author feed and for
+                # GRAPH bug with infinite loop.
+                collection.set_partial_id()
+                collection.drop_duplicates(self.filter_ids)
 
-            # if hashtags not empty, filter result by hashtag
-            if self.extractor.hashtags:
-                collection.filter_hashtags(self.extractor.hashtags)
+                # if hashtags not empty, filter result by hashtag
+                if self.extractor.hashtags:
+                    collection.filter_hashtags(self.extractor.hashtags)
 
-            # if person_id not empty, filter result by author
-            if self.extractor.author_id:
-                collection.filter_author(self.extractor.author_id)
+                # if person_id not empty, filter result by author
+                if self.extractor.author_id:
+                    collection.filter_author(self.extractor.author_id)
 
-            kwargs.get('node').feed.extend(collection)
-            self.add_to_filter(collection.nodes)
+                kwargs.get('node').feed.extend(collection)
+                self.add_to_filter(collection.nodes)
 
-            next_page = data.get('paging', {}).get('next')
-            if next_page is not None:
-                kwargs['recursion'] += 1
-                await self.call(next_page, session, **kwargs)
+                next_page = data.get('paging', {}).get('next')
+                if next_page is not None:
+                    kwargs['recursion'] += 1
+                    await self.call(next_page, session, **kwargs)
 
-        if recursion == 1:
-            self.counter.increment()
-            print(self.counter)
+            if recursion == 1:
+                self.counter.increment()
+                print(self.counter)
 
     async def call_info(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
