@@ -86,12 +86,13 @@ class Extractor(object):
         elif self.export == 'Interactions':
             extractor = InteractionExtractor(extractor=self)
 
-        print("Extracting data... ")
+        print("Extracting data... ", end=" ")
         await extractor.extract()
         print("DONE")
 
-
         print("Converting results... ", end=" ")
+        print(extractor.nodes)
+        print(f'file = {self.export_file}')
         nodes_pd = extractor.nodes.to_pandas(self)
         print("DONE")
 
@@ -107,8 +108,6 @@ class Extractor(object):
             return nodes_pd
         except:
             print(1)
-
-
 
     async def set_token(self):
         with open(self.token) as file:

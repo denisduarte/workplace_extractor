@@ -105,7 +105,7 @@ class MembersExtractor:
 
         await self.extractor.fetch(http_calls)
 
-        logging.info(f'Groups Extraction ended with {len(self.nodes.nodes)} groups extracted')
+        logging.info(f'Member Extraction ended with {len(self.nodes.nodes)} members extracted')
 
     async def call(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
