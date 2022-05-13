@@ -30,9 +30,13 @@ class Extractor(object):
         self.export = kwargs.get('export')
         self.export_file = kwargs.get('export_file')
         self.export_content = kwargs.get('export_content', False)
-        self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
 
-        # optional options
+        if kwargs.get('hashtags', '') is not None:
+            self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
+        else:
+            self.hashtags = []
+
+            # optional options
         args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id',
                 'active_only', 'create_ranking', 'create_gexf', 'node_attributes', 'additional_node_attributes',
                 'joining_column']
