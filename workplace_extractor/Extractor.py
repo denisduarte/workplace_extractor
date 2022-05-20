@@ -100,7 +100,7 @@ class Extractor(object):
         nodes_pd = extractor.nodes.to_pandas(self)
         print("DONE")
 
-        try:
+        if self.config.get('MISC', 'save_file') == 'True':
             print("Saving CSV file... ", end=' ')
             # .to_csv(f'{self.config.get("MISC", "output_dir")}/{self.csv}', index=False, sep=";")
             nodes_pd = nodes_pd.applymap(lambda x: x.encode('unicode_escape')
@@ -109,9 +109,7 @@ class Extractor(object):
                     .to_excel(f'{self.config.get("MISC", "output_dir")}/{self.export_file}', sheet_name='Results', index=False)
             print("DONE")
 
-            return nodes_pd
-        except:
-            print(1)
+        return nodes_pd
 
     async def set_token(self):
         with open(self.token) as file:
