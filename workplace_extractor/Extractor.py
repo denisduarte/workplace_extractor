@@ -9,8 +9,8 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
-from gooey import Gooey, GooeyParser
 
+from workplace_extractor.sharepoint import SharepointConnector
 
 class AuthTokenError(Exception):
     pass
@@ -22,6 +22,12 @@ class Extractor(object):
         # the colnfig.ini file should be in the same folder as the app
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
+
+        self.sharepoint = SharepointConnector(url=self.config.get('sharepoint', 'base_url'),
+                                 site=self.config.get('sharepoint', 'site'),
+                                 folder=self.config.get('sharepoint', 'csv_folder'),
+                                 client_id=self.config.get('sharepoint', 'client_id'),
+                                 client_secret=self.config.get('sharepoint', 'client_secret'))
 
         # required options
         self.token = self.config.get('MISC', 'access_token')
@@ -95,8 +101,6 @@ class Extractor(object):
         print("DONE")
 
         print("Converting results... ", end=" ")
-        print(extractor.nodes)
-        print(f'file = {self.export_file}')
         nodes_pd = extractor.nodes.to_pandas(self)
         print("DONE")
 
@@ -108,6 +112,11 @@ class Extractor(object):
             nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
                     .to_excel(f'{self.config.get("MISC", "output_dir")}/{self.export_file}', sheet_name='Results', index=False)
             print("DONE")
+
+        self.sharepoint.upload_from_df(nodes_pd,
+                                  file_name=self.export_file,
+                                  file_path='',
+                                  file_type='Excel')
 
         return nodes_pd
 
@@ -201,15 +210,16 @@ class Extractor(object):
 class run():
     def __init__(self):
         args = self.read_arguments()
-        wp_extractor = Extractor(**vars(args))
+        #wp_extractor = Extractor(**vars(args))
 
         #args = {'export': 'Interactions', 'export_file': 'exported_data.xlsx', 'since': '2022-01-15', 'until': '2022-04-15', 'create_ranking': True, 'create_gexf': True, 'node_attributes': 'division,department,name,emp_num,email,title,manager_level,author_type', 'additional_node_attributes': '/Users/denisduarte/Petrobras/PythonProjects/output/diretorias.csv', 'joining_column': 'division', 'author_id': ''}
         #args = {'export': 'Posts', 'export_file': 'exported_data-dtdi-jan_fev.xlsx', 'since': '2022-01-01', 'until': '2022-03-01', 'export_content': True}
-        #wp_extractor = Extractor(**args)
+        args = {'export': 'Comments', 'export_file': 'exported_data-2222222.xlsx', 'post_id': '900752023414059_2213546562134592'}
+        wp_extractor = Extractor(**args)
 
         wp_extractor.extract()
 
-    """"""
+    """
     @Gooey(advanced=True,
            default_size=(800, 610),
            program_name='Workplace Extractor',
@@ -218,8 +228,9 @@ class run():
            optional_cols=2,
            progress_regex=r"^progress: (\d+)%$",
            hide_progress_msg=True)
+    """
     def read_arguments(self):
-        parser = GooeyParser(description="Params")
+        parser = None#GooeyParser(description="Params")
         subparsers = parser.add_subparsers(help='Content to export', dest='export')
 
         # EXPORT POSTS
