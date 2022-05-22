@@ -57,7 +57,7 @@ class Person(Author):
     def __init__(self, data):
 
         if Person.funcoes is None:
-            Person.funcoes = pd.read_csv('/Users/denisduarte/Petrobras/PythonProjects/output/funcoes.csv', sep=';')
+            Person.funcoes = pd.read_csv('data/funcoes.csv', sep=';')
 
         node_id = str(data.get('id'))
         name = data.get('name', {}).get('formatted', np.nan)
