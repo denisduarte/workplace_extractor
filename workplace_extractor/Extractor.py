@@ -9,7 +9,7 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
-from gooey import Gooey, GooeyParser
+#from gooey import Gooey, GooeyParser
 
 #from workplace_extractor.sharepoint import SharepointConnector
 
@@ -215,7 +215,7 @@ class run():
 
         #args = {'export': 'Interactions', 'export_file': 'exported_data.xlsx', 'since': '2022-01-15', 'until': '2022-04-15', 'create_ranking': True, 'create_gexf': True, 'node_attributes': 'division,department,name,emp_num,email,title,manager_level,author_type', 'additional_node_attributes': '/Users/denisduarte/Petrobras/PythonProjects/output/diretorias.csv', 'joining_column': 'division', 'author_id': ''}
         #args = {'export': 'Posts', 'export_file': 'exported_data-dtdi-jan_fev.xlsx', 'since': '2022-01-01', 'until': '2022-03-01', 'export_content': True}
-        args = {'export': 'Comments', 'export_file': 'exported_data-ACT_v2.xlsx', 'post_id': '1179632336157794_1181948065926221'}
+        #args = {'export': 'Comments', 'export_file': 'exported_data-ACT_v2.xlsx', 'post_id': '1179632336157794_1181948065926221'}
         wp_extractor = Extractor(**args)
 
         wp_extractor.extract()
@@ -231,7 +231,7 @@ class run():
            hide_progress_msg=True)
     """
     def read_arguments(self):
-        parser = GooeyParser(description="Params")
+        parser = None #GooeyParser(description="Params")
         subparsers = parser.add_subparsers(help='Content to export', dest='export')
 
         # EXPORT POSTS
