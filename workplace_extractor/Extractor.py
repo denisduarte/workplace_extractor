@@ -9,7 +9,7 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
-from gooey import Gooey, GooeyParser
+#from gooey import Gooey, GooeyParser
 
 from workplace_extractor.sharepoint import SharepointConnector
 
@@ -231,8 +231,8 @@ class run():
            hide_progress_msg=True)
     """
     def read_arguments(self):
-        parser = GooeyParser(description="Params")
-        #parser = None
+        #parser = GooeyParser(description="Params")
+        parser = None
         subparsers = parser.add_subparsers(help='Content to export', dest='export')
 
         # EXPORT POSTS
