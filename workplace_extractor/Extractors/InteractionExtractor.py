@@ -38,19 +38,19 @@ class InteractionExtractor:
 
     async def extract(self):
         post_extractor = PostExtractor(self.extractor)
-        #await post_extractor.extract()
-        #self.feeds = post_extractor.nodes
+        await post_extractor.extract()
+        self.feeds = post_extractor.nodes
 
-        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
-        #    pickle.dump(self.feeds, handle)
+        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
+            pickle.dump(self.feeds, handle)
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
-            self.feeds = pickle.load(handle)
-        print('aqui -1')
+        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
+        #    self.feeds = pickle.load(handle)
+        #print('aqui -1')
         user_summary = self.build_user_summary()
         self.nodes.nodes = user_summary
-        return
-        print('aqui 0')
+        #return
+        #print('aqui 0')
         self.build_net()
 
         with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'wb') as handle:
@@ -59,8 +59,8 @@ class InteractionExtractor:
         #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'rb') as handle:
         #    self.net = pickle.load(handle)
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'wb') as handle:
-            pickle.dump(self.net_undirected, handle)
+        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'wb') as handle:
+        #sss    pickle.dump(self.net_undirected, handle)
 
         #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'rb') as handle:
         #    self.net_undirected = pickle.load(handle)
@@ -273,7 +273,7 @@ class InteractionExtractor:
                                     'user_replies': 0, 'user_reply_reactions': 0,
                                     'user_id': user.node_id, 'user_email': user.email,
                                     'user.name': user.name, 'user.department': user.department}, index=[0])
-            data = data.append(new_row, ignore_index=True)
+            data = pd.concat([data, new_row], ignore_index=True)
 
         data.loc[data['user_id'] == user.node_id, action] += total
 

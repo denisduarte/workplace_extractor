@@ -188,8 +188,9 @@ class CommentCollection(NodeCollection):
 
                 comments.append(reply)
 
-        column_order = ['id', 'parent_id', 'message', 'reactions', 'comments', 'author_id', 'author_name',
-                        'author_email', 'author_type', 'author_title', 'author_key', 'author_department']
+        column_order = ['id', 'parent_id', 'message', 'total_reactions', 'reactions_like', 'reactions_love', 'reactions_care',
+                        'reactions_haha', 'reactions_wow', 'reactions_sad', 'reactions_angry','comments', 'author_id',
+                        'author_name', 'author_email', 'author_type', 'author_title', 'author_key', 'author_department']
 
         df = pd.DataFrame(comments)
         df = df[column_order]
@@ -200,8 +201,15 @@ class CommentCollection(NodeCollection):
     def comment_to_dict(comment, extractor):
         comment_dict = comment.to_dict(extractor)
 
-        total_reactions = len(comment.reactions)
-        comment_dict['reactions'] = total_reactions
+        comment_dict['total_reactions'] = len(comment_dict.get('total_reactions', []))
+
+        comment_dict['reactions_like'] = len(comment_dict.get('reactions_like', []))
+        comment_dict['reactions_love'] = len(comment_dict.get('reactions_love', []))
+        comment_dict['reactions_care'] = len(comment_dict.get('reactions_care', []))
+        comment_dict['reactions_haha'] = len(comment_dict.get('reactions_haha', []))
+        comment_dict['reactions_wow'] = len(comment_dict.get('reactions_wow', []))
+        comment_dict['reactions_sad'] = len(comment_dict.get('reactions_sad', []))
+        comment_dict['reactions_angry'] = len(comment_dict.get('reactions_angry', []))
 
         total_replies = len(comment.comments.nodes)
         comment_dict['comments'] = total_replies

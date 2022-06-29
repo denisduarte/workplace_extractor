@@ -46,6 +46,20 @@ class Comment(Node):
             'id': self.node_id,
             'message' : self.message,
             'person': self.person.to_dict(extractor) if self.person is not None else {},
-            'reactions': [reaction.to_dict(extractor) for reaction in self.reactions],
+            'total_reactions': [reaction.to_dict(extractor) for reaction in self.reactions],
+            'reactions_like': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                           if reaction.reaction_type == 'LIKE'],
+            'reactions_love': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                           if reaction.reaction_type == 'LOVE'],
+            'reactions_care': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                           if reaction.reaction_type == 'CARE'],
+            'reactions_haha': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                           if reaction.reaction_type == 'HAHA'],
+            'reactions_wow': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                          if reaction.reaction_type == 'WOW'],
+            'reactions_sad': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                          if reaction.reaction_type == 'SAD'],
+            'reactions_angry': [reaction.to_dict(extractor) for reaction in self.reactions
+                                                            if reaction.reaction_type == 'ANGRY'],
             'comments': [comment.to_dict(extractor) for comment in self.comments.nodes]
         }
