@@ -30,7 +30,7 @@ class PersonExtractor:
         iterator = np.nditer(starts, flags=['f_index'])
 
         for start in iterator:
-            http_calls.append({'url': self.extractor.config.get('URL', 'SCIM') + f'?count={per_page}&'
+            http_calls.append({'url': self.extractor.scim_url + f'?count={per_page}&'
                                                                                  f'startIndex={start}',
                                'call': call,
                                'people': self.nodes})
@@ -47,7 +47,7 @@ class PersonExtractor:
 
     async def fetch_total(self):
         total = []
-        http_calls = [{'url': self.extractor.config.get('URL', 'SCIM'),
+        http_calls = [{'url': self.extractor.scim_url,
                        'call': self.call_total,
                        'total': total}]
 

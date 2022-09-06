@@ -340,51 +340,53 @@ class PostExtractor:
                 getattr(kwargs.get('post'), 'replies')['total'] = Summary({'total_count': 0})
                 getattr(kwargs.get('post'), 'replies_reactions')['total'] = Summary({'total_count': 0})
 
-                if 'data' in data_comments and data_comments['data']:
-                    comments_reactions = 0
-                    replies = 0
-                    replies_reactions = 0
-                    while True:
-                        for comment in data_comments['data']:
-                            comments_reactions += comment.get('reactions', {}) \
-                                .get('summary', {}) \
-                                .get('total_count', 0)
-                            replies += comment.get('comments', {}) \
-                                .get('summary', {}) \
-                                .get('total_count', 0)
+                try:
+                    if 'data' in data_comments and data_comments['data']:
+                        comments_reactions = 0
+                        replies = 0
+                        replies_reactions = 0
+                        while True:
+                            for comment in data_comments['data']:
+                                comments_reactions += comment.get('reactions', {}) \
+                                    .get('summary', {}) \
+                                    .get('total_count', 0)
+                                replies += comment.get('comments', {}) \
+                                    .get('summary', {}) \
+                                    .get('total_count', 0)
 
-                            data_replies = comment.get('comments')
-                            if 'data' in data_replies and data_replies['data']:
-                                while True:
-                                    for reply in data_replies['data']:
-                                        replies_reactions += reply.get('reactions', {}) \
-                                            .get('summary', {}) \
-                                            .get('total_count', 0)
+                                data_replies = comment.get('comments')
+                                if 'data' in data_replies and data_replies['data']:
+                                    while True:
+                                        for reply in data_replies['data']:
+                                            replies_reactions += reply.get('reactions', {}) \
+                                                .get('summary', {}) \
+                                                .get('total_count', 0)
 
-                                    next_page = data_replies.get('paging', {}).get('next')
-                                    if next_page is not None:
-                                        kwargs['recursion'] += 1
-                                        data_replies = await self.extractor.fetch_url(next_page, session, 'GRAPH',
-                                                                                      **kwargs)
-                                    else:
-                                        break
+                                        next_page = data_replies.get('paging', {}).get('next')
+                                        if next_page is not None:
+                                            kwargs['recursion'] += 1
+                                            data_replies = await self.extractor.fetch_url(next_page, session, 'GRAPH',
+                                                                                          **kwargs)
+                                        else:
+                                            break
 
-                        next_page = data_comments.get('paging', {}).get('next')
-                        if next_page is not None:
-                            kwargs['recursion'] += 1
-                            data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                        else:
-                            break
+                            next_page = data_comments.get('paging', {}).get('next')
+                            if next_page is not None:
+                                kwargs['recursion'] += 1
+                                data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+                            else:
+                                break
 
-                    summary = Summary({'total_count': comments_reactions})
-                    getattr(kwargs.get('post'), 'comments_reactions')['total'] = summary
+                        summary = Summary({'total_count': comments_reactions})
+                        getattr(kwargs.get('post'), 'comments_reactions')['total'] = summary
 
-                    summary = Summary({'total_count': replies})
-                    getattr(kwargs.get('post'), 'replies')['total'] = summary
+                        summary = Summary({'total_count': replies})
+                        getattr(kwargs.get('post'), 'replies')['total'] = summary
 
-                    summary = Summary({'total_count': replies_reactions})
-                    getattr(kwargs.get('post'), 'replies_reactions')['total'] = summary
-
+                        summary = Summary({'total_count': replies_reactions})
+                        getattr(kwargs.get('post'), 'replies_reactions')['total'] = summary
+                except Exception as e:
+                    print(1)
         if recursion == 1:
             self.counter.increment()
             print(self.counter)

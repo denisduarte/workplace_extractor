@@ -67,18 +67,23 @@ class Person(Author):
         title = data.get('title', np.nan)
         manager_level = self.manager_level(title)
         active = data.get('active', np.nan)
-        division = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('division', np.nan)
-        department = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('department', np.nan)
+        division = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('division', np.nan)
+        department = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('department', np.nan)
         building = None
         for address in data.get('addresses', []):
             if address.get('type') == 'work':
                 building = address.get('formatted')
-        emp_num = data.get('urn:scim:schemas:extension:enterprise:1.0', {}).get('employeeNumber', np.nan)
-        invited = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('invited', np.nan)
-        date = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('inviteDate', np.nan)
-        invite_date = datetime.utcfromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')
+        emp_num = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('employeeNumber', np.nan)
+        invited = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('invited', np.nan)
+        date = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('inviteDate', '')
+        #invite_date = datetime.utcfromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')
 
-        claimed = data.get('urn:scim:schemas:extension:facebook:accountstatusdetails:1.0', {}).get('claimed', np.nan)
+        try:
+            invite_date = datetime.fromisoformat(date).strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError as e:
+            invite_date = ''
+
+        claimed = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('claimed', np.nan)
         feed = PostCollection()
 
         Author.__init__(self, node_id, name, author_type, title, manager_level, active, division,

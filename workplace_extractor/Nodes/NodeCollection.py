@@ -188,9 +188,10 @@ class CommentCollection(NodeCollection):
 
                 comments.append(reply)
 
-        column_order = ['id', 'parent_id', 'message', 'total_reactions', 'reactions_like', 'reactions_love', 'reactions_care',
-                        'reactions_haha', 'reactions_wow', 'reactions_sad', 'reactions_angry','comments', 'author_id',
-                        'author_name', 'author_email', 'author_type', 'author_title', 'author_key', 'author_department']
+        column_order = ['id', 'parent_id', 'replies', 'message', 'total_reactions', 'reactions_like', 'reactions_love',
+                        'reactions_care', 'reactions_haha', 'reactions_wow', 'reactions_sad', 'reactions_angry',
+                        'author_id', 'author_name', 'author_email', 'author_type', 'author_title', 'author_key',
+                        'author_department']
 
         df = pd.DataFrame(comments)
         df = df[column_order]
@@ -212,7 +213,7 @@ class CommentCollection(NodeCollection):
         comment_dict['reactions_angry'] = len(comment_dict.get('reactions_angry', []))
 
         total_replies = len(comment.comments.nodes)
-        comment_dict['comments'] = total_replies
+        comment_dict['replies'] = total_replies
 
         comment_dict['author_id'] = comment_dict.get('person', {}).get('id')
         comment_dict['author_name'] = comment_dict.get('person', {}).get('name')

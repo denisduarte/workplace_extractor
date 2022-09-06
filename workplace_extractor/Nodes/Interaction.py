@@ -44,7 +44,7 @@ class Comment(Node):
     def to_dict(self, extractor):
         return {
             'id': self.node_id,
-            'message' : self.message,
+            'message': self.message,
             'person': self.person.to_dict(extractor) if self.person is not None else {},
             'total_reactions': [reaction.to_dict(extractor) for reaction in self.reactions],
             'reactions_like': [reaction.to_dict(extractor) for reaction in self.reactions
@@ -61,5 +61,5 @@ class Comment(Node):
                                                           if reaction.reaction_type == 'SAD'],
             'reactions_angry': [reaction.to_dict(extractor) for reaction in self.reactions
                                                             if reaction.reaction_type == 'ANGRY'],
-            'comments': [comment.to_dict(extractor) for comment in self.comments.nodes]
+            'replies': [comment.to_dict(extractor) for comment in self.comments.nodes]
         }
