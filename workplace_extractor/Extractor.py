@@ -9,7 +9,6 @@ import asyncio
 import aiohttp
 import pandas as pd
 import configparser
-from gooey import Gooey, GooeyParser
 
 
 class AuthTokenError(Exception):
