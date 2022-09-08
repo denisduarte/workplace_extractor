@@ -55,12 +55,13 @@ class Extractor(object):
             os.makedirs(self.export_folder)
 
     def extract(self):
-        #loop = asyncio.get_event_loop()
-        #return loop.run_until_complete(self._extract())
-
-        return {'teste': 1}
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self._extract())
 
     async def _extract(self):
+
+        return {'teste': 2}
+
         await self.init()
 
         extractor = None
