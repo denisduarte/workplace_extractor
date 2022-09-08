@@ -8,7 +8,6 @@ import logging
 import asyncio
 import aiohttp
 import pandas as pd
-import configparser
 
 
 class AuthTokenError(Exception):
@@ -56,8 +55,10 @@ class Extractor(object):
             os.makedirs(self.export_folder)
 
     def extract(self):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self._extract())
+        #loop = asyncio.get_event_loop()
+        #return loop.run_until_complete(self._extract())
+
+        return {'teste': 1}
 
     async def _extract(self):
         await self.init()

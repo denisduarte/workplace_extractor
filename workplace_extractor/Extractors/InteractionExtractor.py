@@ -5,7 +5,6 @@ from workplace_extractor.Extractors import PostExtractor
 import pandas as pd
 import networkx as nx
 import pickle
-import operator
 
 
 class InteractionExtractor:
