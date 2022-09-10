@@ -1,6 +1,6 @@
-from workplace_extractor.Nodes.Author import Person
-from workplace_extractor.Nodes.NodeCollection import PeopleCollection, NodeCollection
-from workplace_extractor.Counter import Counter
+from ..Nodes.Author import Person
+from ..Nodes.NodeCollection import PeopleCollection, NodeCollection
+from ..Counter import Counter
 
 import numpy as np
 # import logging
@@ -30,8 +30,7 @@ class PersonExtractor:
         iterator = np.nditer(starts, flags=['f_index'])
 
         for start in iterator:
-            http_calls.append({'url': self.extractor.scim_url + f'?count={per_page}&'
-                                                                                 f'startIndex={start}',
+            http_calls.append({'url': self.extractor.scim_url + f'?count={per_page}&startIndex={start}',
                                'call': call,
                                'people': self.nodes})
 
@@ -61,7 +60,7 @@ class PersonExtractor:
 
         collection = NodeCollection()
         if 'Resources' in data:
-            collection.extend([Person(person) for person in data['Resources']])
+            collection.extend([Person(self.extractor, person) for person in data['Resources']])
 
         kwargs.get('people').extend(collection)
 

@@ -1,5 +1,5 @@
-from workplace_extractor.Extractors import PostExtractor, CommentExtractor, GroupExtractor, MembersExtractor
-from workplace_extractor.Extractors import PersonExtractor, InteractionExtractor, EventExtractor
+from .Extractors import PostExtractor, CommentExtractor, GroupExtractor, MembersExtractor
+from .Extractors import PersonExtractor, InteractionExtractor, EventExtractor
 
 # import pickle
 import sys
@@ -21,7 +21,7 @@ class Extractor(object):
         self.token = kwargs.get('access_token')
 
         self.export = kwargs.get('export')
-        self.export_file = kwargs.get('export_file')
+        self.export_file = f'{kwargs.get("export_file")}.xlsx'
         self.export_folder = kwargs.get('export_folder')
 
         self.export_content = kwargs.get('export_content', False)
@@ -40,7 +40,7 @@ class Extractor(object):
             # optional options
         args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id',
                 'active_only', 'create_ranking', 'create_gexf', 'node_attributes', 'additional_node_attributes',
-                'joining_column']
+                'joining_column', 'people_attributes_file', 'people_attributes_join']
         for key, value in kwargs.items():
             if key in args:
                 setattr(self, key, value)
@@ -59,8 +59,6 @@ class Extractor(object):
         return loop.run_until_complete(self._extract())
 
     async def _extract(self):
-
-        return {'teste': 2}
 
         await self.init()
 
@@ -83,8 +81,7 @@ class Extractor(object):
         await extractor.extract()
 
         nodes_pd = extractor.nodes.to_pandas(self)
-        nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
-                .to_excel(f'{self.export_folder}{self.export_file}', sheet_name='Results', index=False)
+        nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True)
 
         return nodes_pd
 
