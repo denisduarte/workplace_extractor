@@ -1,20 +1,19 @@
 import pandas as pd
 
-from workplace_extractor.Nodes.Node import Node
-from workplace_extractor.Nodes.NodeCollection import PostCollection
+from .Node import Node
+from .NodeCollection import PostCollection
 from datetime import datetime
 
 import numpy as np
 
 
 class Author(Node):
-    def __init__(self, node_id, name, author_type, title, manager_level, active, division, department, building, email,
+    def __init__(self, node_id, name, author_type, title, active, division, department, building, email,
                  emp_num, invited, invite_date, claimed, feed):
         Node.__init__(self, node_id)
         self.name = name
         self.author_type = author_type
         self.title = title
-        self.manager_level = manager_level
         self.active = active
         self.division = division
         self.department = department
@@ -52,20 +51,12 @@ class Author(Node):
 
 class Person(Author):
 
-    funcoes = None
-
-    def __init__(self, data):
-
-        if Person.funcoes is None:
-            Person.funcoes = pd.read_csv('/Users/denisduarte/Petrobras/PythonProjects/output/funcoes.csv', sep=';')
-            # Person.funcoes = pd.read_csv('data/funcoes.csv', sep=';')
-
+    def __init__(self, extractor, data):
         node_id = str(data.get('id'))
         name = data.get('name', {}).get('formatted', np.nan)
         author_type = data.get('userType', np.nan)
         email = data.get('userName', np.nan)
         title = data.get('title', np.nan)
-        manager_level = self.manager_level(title)
         active = data.get('active', np.nan)
         division = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('division', np.nan)
         department = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('department', np.nan)
@@ -83,36 +74,31 @@ class Person(Author):
         except ValueError as e:
             invite_date = ''
 
-        claimed = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('claimed', np.nan)
+        claimed = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {})\
+                      .get('claimed', np.nan)
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, manager_level, active, division,
+        people_attributes = pd.read_csv(extractor.people_attributes_file, sep=';')
+
+        join = extractor.people_attributes_join
+        for column in people_attributes.columns:
+            if column != join:
+                join_value = data.get(join, '').lower()
+                try:
+                    setattr(self, column, people_attributes[people_attributes[join] == join_value][column].values[0])
+                except IndexError:
+                    setattr(self, column, '')
+
+        Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
 
-    @staticmethod
-    def manager_level(title):
-
-        try:
-            title = '' if pd.isna(title) else title
-        except Exception as e:
-            print(1)
-
-        try:
-            manager_level = Person.funcoes[Person.funcoes['Função'] == title.lower()]['Nível'].values[0]
-
-        except IndexError:
-            manager_level = 'Sem função gratificada'
-        except Exception as e:
-            print(1)
-
-        return manager_level
 
 class Bot(Author):
     def __init__(self, data):
         node_id = str(data.get('id'))
         name = data.get('name', {})
         author_type = 'Bot/Ext'
-        manager_level = ''
+        self.manager_level = ''
         title = ''
         active = ''
         division = ''
@@ -125,5 +111,5 @@ class Bot(Author):
         claimed = ''
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, manager_level, active, division,
+        Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
