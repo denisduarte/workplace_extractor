@@ -34,6 +34,7 @@ class Extractor(object):
         self.scim_url = kwargs.get('scim_url')
 
         self.update_task_progress_func = kwargs.get('update_task_progress_func', None)
+        self.celery_task = kwargs.get('celery_task', None)
 
         if kwargs.get('hashtags', '') is not None:
             self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
@@ -109,7 +110,7 @@ class Extractor(object):
     async def fetch_url(self, url, session, api='', **kwargs):
 
         if self.update_task_progress_func and random.randint(1, 100) == 100:
-            self.update_task_progress_func(url=url, message='randon log')
+            self.update_task_progress_func(self.celery_task, url=url, message='randon log')
 
         # to prevent GRAPH bug with infinite recursion
         if kwargs.get('recursion', 0) > self.max_recursion:
