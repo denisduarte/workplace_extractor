@@ -109,8 +109,8 @@ class Extractor(object):
 
     async def fetch_url(self, url, session, api='', **kwargs):
 
-        if self.update_task_progress_func and random.randint(1, 100) == 100:
-            self.update_task_progress_func(self.celery_task, url=url, message='randon log')
+        if random.randint(1, 100) == 100:
+            self.update_task_progress_func(self.celery_task, url=url, message='random log')
 
         # to prevent GRAPH bug with infinite recursion
         if kwargs.get('recursion', 0) > self.max_recursion:
