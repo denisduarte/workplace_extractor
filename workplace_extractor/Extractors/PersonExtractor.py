@@ -3,7 +3,7 @@ from ..Nodes.NodeCollection import PeopleCollection, NodeCollection
 from ..Counter import Counter
 
 import numpy as np
-# import logging
+import logging
 
 
 class PersonExtractor:
@@ -20,7 +20,7 @@ class PersonExtractor:
         self.counter = Counter('Person')
 
     async def extract(self, per_page=100, call=None):
-        # logging.info('Starting people extraction')
+        logging.info('Starting people extraction')
         call = self.call if call is None else call
 
         await self.fetch_total()
@@ -42,7 +42,7 @@ class PersonExtractor:
         if self.extractor.active_only:
             self.nodes.nodes = [person for person in self.nodes.nodes if person.active]
 
-        # logging.info(f'People Extraction ended with {len(self.nodes.nodes)} members extracted')
+        logging.info(f'People Extraction ended with {len(self.nodes.nodes)} members extracted')
 
     async def fetch_total(self):
         total = []
@@ -53,7 +53,7 @@ class PersonExtractor:
         await self.extractor.fetch(http_calls)
 
         self.total = total[0]
-        # logging.info(f'Total number of members: {self.total}')
+        logging.info(f'Total number of members: {self.total}')
 
     async def call(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'SCIM', **kwargs)

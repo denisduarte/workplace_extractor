@@ -1,7 +1,6 @@
-from workplace_extractor.Nodes.NodeCollection import GroupCollection, NodeCollection, PeopleCollection
-from workplace_extractor.Nodes.Group import Group, Member
-from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
-from workplace_extractor.Counter import Counter
+from ..Nodes.NodeCollection import GroupCollection, NodeCollection, PeopleCollection
+from ..Nodes.Group import Group, Member
+from ..Counter import Counter
 
 import numpy as np
 import logging
@@ -18,10 +17,10 @@ class GroupExtractor:
         logging.info('Starting groups extraction')
         call = self.call if call is None else call
 
-        http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/community/groups?limit={per_page}' +
-                                                                          '&fields=id,name,privacy,purpose,'
-                                                                          'admins.limit(100){email},'
-                                                                          'members.summary(1)',
+        http_calls = [{'url': self.extractor.graph_url + f'/community/groups?limit={per_page}' +
+                                                         '&fields=id,name,privacy,purpose,'
+                                                         'admins.limit(100){email},'
+                                                         'members.summary(1)',
                        'call': call,
                        'groups': self.nodes,
                        'recursion': 1}]
@@ -96,9 +95,9 @@ class MembersExtractor:
     async def extract(self, per_page=100, call=None):
         call = self.call if call is None else call
 
-        http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{self.group_id}/members?limit={per_page}' +
-                                                                          '&fields=id,administrator,joined,added_by,'
-                                                                          'name,email,division,department,title,active',
+        http_calls = [{'url': self.extractor.graph_url + f'/{self.group_id}/members?limit={per_page}' +
+                                                         '&fields=id,administrator,joined,added_by,'
+                                                         'name,email,division,department,title,active',
                        'call': call,
                        'members': self.nodes,
                        'recursion': 1}]

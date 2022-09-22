@@ -36,6 +36,8 @@ class Extractor(object):
         self.update_task_progress_func = kwargs.get('update_task_progress_func', None)
         self.celery_task = kwargs.get('celery_task', None)
 
+        self.loglevel = kwargs.get('loglevel', None)
+
         if kwargs.get('hashtags', '') is not None:
             self.hashtags = [hashtag.lower() for hashtag in kwargs.get('hashtags', '').replace('#', '').split(',')]
         else:
@@ -57,6 +59,11 @@ class Extractor(object):
     async def init(self):
         if not os.path.exists(self.export_folder):
             os.makedirs(self.export_folder)
+
+        if self.loglevel != 'NONE':
+            logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                                filename=f'{self.export_folder}/workplace_extractor.log',
+                                level=getattr(logging, self.loglevel))
 
     def extract(self):
         loop = asyncio.get_event_loop()
@@ -108,6 +115,8 @@ class Extractor(object):
             return await call(url, session, **kwargs)
 
     async def fetch_url(self, url, session, api='', **kwargs):
+        logging.debug(f'GET {url}')
+        logging.debug('Recursion ' + str(kwargs.get('recursion', 0)))
 
         if self.update_task_progress_func and random.randint(1, 100) == 100:
             self.update_task_progress_func(self.celery_task, url=url, message='random log')
