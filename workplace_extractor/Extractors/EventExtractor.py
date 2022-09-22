@@ -1,8 +1,7 @@
-from workplace_extractor.Nodes.NodeCollection import EventCollection
-from workplace_extractor.Nodes.Event import Event
-from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
-from workplace_extractor.Counter import Counter
-
+from .PersonExtractor import PersonExtractor
+from ..Nodes.NodeCollection import EventCollection
+from ..Nodes.Event import Event
+from ..Counter import Counter
 
 import numpy as np
 import logging
@@ -27,9 +26,9 @@ class EventExtractor:
 
         http_calls = []
         for node in self.people_extractor.nodes.nodes:
-            http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/events/attending?'
-                                                                                  f'limit={per_page}'
-                                                                                  f'&fields={fields}',
+            http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/events/attending?'
+                                                                 f'limit={per_page}'
+                                                                 f'&fields={fields}',
                                'call': self.call,
                                'node': node,
                                'recursion': 1})

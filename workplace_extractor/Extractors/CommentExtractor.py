@@ -1,7 +1,7 @@
-from workplace_extractor.Extractors import PostExtractor
-from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
-from workplace_extractor.Nodes.NodeCollection import CommentCollection
-from workplace_extractor.Nodes.Author import Bot
+from . import PostExtractor
+from .PersonExtractor import PersonExtractor
+from ..Nodes.NodeCollection import CommentCollection
+from ..Nodes.Author import Bot
 
 import logging
 
@@ -27,8 +27,8 @@ class CommentExtractor:
         # Get post
         fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
 
-        http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{self.extractor.post_id}?'
-                                                                          f'fields={fields}',
+        http_calls = [{'url': self.extractor.graph_url + f'/{self.extractor.post_id}?'
+                                                         f'fields={fields}',
                        'call': post_extractor.call,
                        'node': feed,
                        'recursion': 1}]
@@ -47,8 +47,8 @@ class CommentExtractor:
                  'reactions.limit(100).summary(1)' \
                  '}'
 
-        http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{self.extractor.post_id}/comments'
-                                                                          f'?limit=100&fields={fields}',
+        http_calls = [{'url': self.extractor.graph_url + f'/{self.extractor.post_id}/comments'
+                                                         f'?limit=100&fields={fields}',
                        'call': self.call,
                        'node': feed,
                        'postExtractor': post_extractor,

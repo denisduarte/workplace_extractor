@@ -1,10 +1,9 @@
-from workplace_extractor.Nodes.NodeCollection import PostCollection, NodeCollection, InteractionCollection
-from workplace_extractor.Extractors import PostExtractor
-
+from . import PostExtractor
+from ..Nodes.NodeCollection import PostCollection, NodeCollection, InteractionCollection
 
 import pandas as pd
 import networkx as nx
-import pickle
+# import pickle
 
 
 class InteractionExtractor:
@@ -18,7 +17,7 @@ class InteractionExtractor:
 
         self.nodes = InteractionCollection()
 
-        ### Create list of node attributes
+        # Create list of node attributes
         self.node_attribute_list = []
         self.node_additional_attribute_list = []
         self.additional_attributes = None
@@ -40,28 +39,28 @@ class InteractionExtractor:
         await post_extractor.extract()
         self.feeds = post_extractor.nodes
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
-            pickle.dump(self.feeds, handle)
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
+        #    pickle.dump(self.feeds, handle)
 
-        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
         #    self.feeds = pickle.load(handle)
-        #print('aqui -1')
+        # print('aqui -1')
         user_summary = self.build_user_summary()
         self.nodes.nodes = user_summary
-        #return
-        #print('aqui 0')
+        # return
+        # print('aqui 0')
         self.build_net()
 
-        with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'wb') as handle:
-            pickle.dump(self.net, handle)
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'wb') as handle:
+        #    pickle.dump(self.net, handle)
 
-        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'rb') as handle:
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'rb') as handle:
         #    self.net = pickle.load(handle)
 
-        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'wb') as handle:
-        #sss    pickle.dump(self.net_undirected, handle)
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'wb') as handle:
+        #    pickle.dump(self.net_undirected, handle)
 
-        #with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'rb') as handle:
+        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'rb') as handle:
         #    self.net_undirected = pickle.load(handle)
 
         if self.extractor.create_ranking:
@@ -89,11 +88,7 @@ class InteractionExtractor:
         return g_undirected
 
     def build_net(self, include_inactive=False):
-
-        comment_weight = float(self.extractor.config.get("NET", "comment_weight"))
-        reaction_weight = float(self.extractor.config.get("NET", "reaction_weight"))
-
-        ### Build the net
+        # Build the net
         net = nx.DiGraph()
         for node in self.feeds.nodes:
             if node.feed is not None and node.feed.nodes:
@@ -117,18 +112,19 @@ class InteractionExtractor:
 
                                     if net.has_edge(source, target):
                                         # we added this one before, just increase the weight by one
-                                        net.edges[source, target]['weight'] += comment_weight
+                                        net.edges[source, target]['weight'] += float(self.extractor.comment_weight)
                                     else:
                                         # new edge. add with weight=1
 
-                                        net.add_edge(source, target, weight=comment_weight,
-                                                                     source_division=net.nodes[source]['division'],
-                                                                     source_diretoria=net.nodes[source]['Diretoria'],
-                                                                     target_division=net.nodes[target]['division'],
-                                                                     target_diretoria=net.nodes[target]['Diretoria'])
+                                        net.add_edge(source, target, weight=float(self.extractor.comment_weight),
+                                                     source_division=net.nodes[source]['division'],
+                                                     source_diretoria=net.nodes[source]['Diretoria'],
+                                                     target_division=net.nodes[target]['division'],
+                                                     target_diretoria=net.nodes[target]['Diretoria'])
 
-
-                        if post.reactions['data'] is not None and post.reactions['data'] and post.author.node_id != 'None':
+                        if post.reactions['data'] is not None \
+                                and post.reactions['data'] \
+                                and post.author.node_id != 'None':
                             # add node for post author
                             net.add_node(target, **self.list_node_attributes(post.author, self.extractor))
 
@@ -143,14 +139,14 @@ class InteractionExtractor:
 
                                     if net.has_edge(source, target):
                                         # we added this one before, just increase the weight by one
-                                        net.edges[source, target]['weight'] += reaction_weight
+                                        net.edges[source, target]['weight'] += float(self.extractor.reaction_weight)
                                     else:
                                         # new edge. add with weight=1
-                                        net.add_edge(source, target, weight=reaction_weight,
-                                                                     source_division=net.nodes[source]['division'],
-                                                                     source_diretoria=net.nodes[source]['Diretoria'],
-                                                                     target_division=net.nodes[target]['division'],
-                                                                     target_diretoria=net.nodes[target]['Diretoria'])
+                                        net.add_edge(source, target, weight=float(self.extractor.reaction_weight),
+                                                     source_division=net.nodes[source]['division'],
+                                                     source_diretoria=net.nodes[source]['Diretoria'],
+                                                     target_division=net.nodes[target]['division'],
+                                                     target_diretoria=net.nodes[target]['Diretoria'])
 
         net_undirected = self.convert_to_undirected(net)
 
@@ -195,10 +191,11 @@ class InteractionExtractor:
             ranking = ranking.reset_index(drop=True)
             ranking[f'global_position_{aggregation_field}'] = ranking.index + 1
 
-            #ranking = ranking.sort_values(['division', aggregation_field], ascending=False).groupby('division')
-            #ranking[f'division_position_{aggregation_field}'] = ranking.groupby(['division']).cumcount() + 1
+            # ranking = ranking.sort_values(['division', aggregation_field], ascending=False).groupby('division')
+            # ranking[f'division_position_{aggregation_field}'] = ranking.groupby(['division']).cumcount() + 1
 
-            ranking[f'division_position_{aggregation_field}'] = ranking.sort_values(['division', aggregation_field], ascending=False)\
+            ranking[f'division_position_{aggregation_field}'] = ranking.sort_values(['division', aggregation_field],
+                                                                                    ascending=False)\
                                                                        .groupby(['division'])\
                                                                        .cumcount() + 1
 
@@ -230,9 +227,12 @@ class InteractionExtractor:
                         print(1)
 
                     df = self.update_summary_row('posts', df, post.author)
-                    df = self.update_summary_row('posts_reactions', df, post.author, len(post.reactions.get('data')))
-                    df = self.update_summary_row('posts_views', df, post.author, len(post.seen.get('data')))
-                    df = self.update_summary_row('posts_comments', df, post.author, len(post.comments.get('data').nodes))
+                    df = self.update_summary_row('posts_reactions', df, post.author,
+                                                 len(post.reactions.get('data')))
+                    df = self.update_summary_row('posts_views', df, post.author,
+                                                 len(post.seen.get('data')))
+                    df = self.update_summary_row('posts_comments', df, post.author,
+                                                 len(post.comments.get('data').nodes))
 
                     for reaction in post.reactions.get('data', []):
                         df = self.update_summary_row('user_post_reactions', df, reaction.person)

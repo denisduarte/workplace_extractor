@@ -33,6 +33,9 @@ class Extractor(object):
         self.graph_url = kwargs.get('graph_url')
         self.scim_url = kwargs.get('scim_url')
 
+        self.comment_weight = kwargs.get('comment_weight')
+        self.reaction_weight = kwargs.get('reaction_weight')
+
         self.update_task_progress_func = kwargs.get('update_task_progress_func', None)
         self.celery_task = kwargs.get('celery_task', None)
 
@@ -141,9 +144,6 @@ class Extractor(object):
                         logging.error(f'Error 500 when calling {url}')
                         raise Exception
                     else:
-                        #if api == 'SCIM':
-                        #    content_type = 'text/javascript'
-                        #elif api == 'GRAPH':
                         content_type = 'application/json'
 
                         return await resp.json(content_type=content_type)
@@ -154,7 +154,7 @@ class Extractor(object):
                 logging.warning(f' {tries} of {max_retries}')
 
         if tries == max_retries:
-            #raise TimeoutError('Too many retries')
+            # raise TimeoutError('Too many retries')
             logging.critical(f'Response returned ERROR 500 for {url}.')
 
     @staticmethod

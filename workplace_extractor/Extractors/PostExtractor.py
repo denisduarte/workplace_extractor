@@ -1,12 +1,10 @@
-from workplace_extractor.Extractors.GroupExtractor import GroupExtractor
-from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
-
-from workplace_extractor.Nodes.NodeCollection import PostCollection
-from workplace_extractor.Nodes.Author import Bot
-from workplace_extractor.Nodes.Post import Summary, Post
-from workplace_extractor.Nodes.Interaction import View, Reaction, Comment
-
-from workplace_extractor.Counter import Counter
+from .GroupExtractor import GroupExtractor
+from .PersonExtractor import PersonExtractor
+from ..Nodes.NodeCollection import PostCollection
+from ..Nodes.Author import Bot
+from ..Nodes.Post import Summary, Post
+from ..Nodes.Interaction import View, Reaction, Comment
+from ..Counter import Counter
 
 import logging
 
@@ -59,11 +57,11 @@ class PostExtractor:
                 # feed not found. halting.
                 exit(0)
 
-            http_calls = [{'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
-                                                                              f'?limit={per_page}'
-                                                                              f'&fields={fields}'
-                                                                              f'&since={self.extractor.since}'
-                                                                              f'&until={self.extractor.until}',
+            http_calls = [{'url': self.extractor.graph_url + f'/{node.node_id}/feed'
+                                                             f'?limit={per_page}'
+                                                             f'&fields={fields}'
+                                                             f'&since={self.extractor.since}'
+                                                             f'&until={self.extractor.until}',
                            'call': self.call,
                            'node': node,
                            'recursion': 1}]
@@ -78,11 +76,11 @@ class PostExtractor:
             logging.info(f'Extracting posts from {len(group_extractor.nodes.nodes)} groups.')
             http_calls = []
             for node in group_extractor.nodes.nodes:
-                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
-                                                                                      f'?limit={per_page}'
-                                                                                      f'&fields={fields}'
-                                                                                      f'&since={self.extractor.since}'
-                                                                                      f'&until={self.extractor.until}',
+                http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/feed'
+                                                                     f'?limit={per_page}'
+                                                                     f'&fields={fields}'
+                                                                     f'&since={self.extractor.since}'
+                                                                     f'&until={self.extractor.until}',
                                    'call': self.call,
                                    'node': node,
                                    'recursion': 1})
@@ -96,11 +94,11 @@ class PostExtractor:
             logging.info(f'Extracting posts from {len(people_extractor.nodes.nodes)} people.')
             http_calls = []
             for node in people_extractor.nodes.nodes:
-                http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{node.node_id}/feed'
-                                                                                      f'?limit={per_page}'
-                                                                                      f'&fields={fields}'
-                                                                                      f'&since={self.extractor.since}'
-                                                                                      f'&until={self.extractor.until}',
+                http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/feed'
+                                                                     f'?limit={per_page}'
+                                                                     f'&fields={fields}'
+                                                                     f'&since={self.extractor.since}'
+                                                                     f'&until={self.extractor.until}',
                                    'call': self.call,
                                    'node': node,
                                    'recursion': 1})
@@ -124,21 +122,21 @@ class PostExtractor:
         for node in self.nodes.nodes:
             for post in node.feed.nodes:
                 http_calls.append({
-                    'url': self.extractor.config.get('URL', 'GRAPH') + f'/{post.node_id}?fields='
-                                                                       'reactions.limit(100).summary(1),'
-                                                                       'seen.limit(100).summary(1),'
-                                                                       'comments.limit(100).summary(1)'
-                                                                       '{'
-                                                                       'created_time,'
-                                                                       'from,'
-                                                                       'reactions.limit(100).summary(1),'
-                                                                       'comments.limit(100).summary(1)'
-                                                                       '{'
-                                                                       'created_time,'
-                                                                       'from,'
-                                                                       'reactions.limit(100).summary(1)'
-                                                                       '}'
-                                                                       '}',
+                    'url': self.extractor.graph_url + f'/{post.node_id}?fields='
+                                                      'reactions.limit(100).summary(1),'
+                                                      'seen.limit(100).summary(1),'
+                                                      'comments.limit(100).summary(1)'
+                                                      '{'
+                                                      'created_time,'
+                                                      'from,'
+                                                      'reactions.limit(100).summary(1),'
+                                                      'comments.limit(100).summary(1)'
+                                                      '{'
+                                                      'created_time,'
+                                                      'from,'
+                                                      'reactions.limit(100).summary(1)'
+                                                      '}'
+                                                      '}',
                     'call': self.call_info if self.extractor.export == 'Interactions' else self.call_count,
                     'post': post,
                     'recursion': 1})
@@ -149,7 +147,7 @@ class PostExtractor:
                 if author is not None:
                     post.author = author
                 else:
-                    http_calls.append({'url': self.extractor.config.get('URL', 'GRAPH') + f'/{post.author_id}',
+                    http_calls.append({'url': self.extractor.graph_url + f'/{post.author_id}',
                                        'call': self.call_bot,
                                        'post': post})
 
@@ -340,53 +338,51 @@ class PostExtractor:
                 getattr(kwargs.get('post'), 'replies')['total'] = Summary({'total_count': 0})
                 getattr(kwargs.get('post'), 'replies_reactions')['total'] = Summary({'total_count': 0})
 
-                try:
-                    if 'data' in data_comments and data_comments['data']:
-                        comments_reactions = 0
-                        replies = 0
-                        replies_reactions = 0
-                        while True:
-                            for comment in data_comments['data']:
-                                comments_reactions += comment.get('reactions', {}) \
-                                    .get('summary', {}) \
-                                    .get('total_count', 0)
-                                replies += comment.get('comments', {}) \
-                                    .get('summary', {}) \
-                                    .get('total_count', 0)
+                if 'data' in data_comments and data_comments['data']:
+                    comments_reactions = 0
+                    replies = 0
+                    replies_reactions = 0
+                    while True:
+                        for comment in data_comments['data']:
+                            comments_reactions += comment.get('reactions', {}) \
+                                .get('summary', {}) \
+                                .get('total_count', 0)
+                            replies += comment.get('comments', {}) \
+                                .get('summary', {}) \
+                                .get('total_count', 0)
 
-                                data_replies = comment.get('comments')
-                                if 'data' in data_replies and data_replies['data']:
-                                    while True:
-                                        for reply in data_replies['data']:
-                                            replies_reactions += reply.get('reactions', {}) \
-                                                .get('summary', {}) \
-                                                .get('total_count', 0)
+                            data_replies = comment.get('comments')
+                            if 'data' in data_replies and data_replies['data']:
+                                while True:
+                                    for reply in data_replies['data']:
+                                        replies_reactions += reply.get('reactions', {}) \
+                                            .get('summary', {}) \
+                                            .get('total_count', 0)
 
-                                        next_page = data_replies.get('paging', {}).get('next')
-                                        if next_page is not None:
-                                            kwargs['recursion'] += 1
-                                            data_replies = await self.extractor.fetch_url(next_page, session, 'GRAPH',
-                                                                                          **kwargs)
-                                        else:
-                                            break
+                                    next_page = data_replies.get('paging', {}).get('next')
+                                    if next_page is not None:
+                                        kwargs['recursion'] += 1
+                                        data_replies = await self.extractor.fetch_url(next_page, session, 'GRAPH',
+                                                                                      **kwargs)
+                                    else:
+                                        break
 
-                            next_page = data_comments.get('paging', {}).get('next')
-                            if next_page is not None:
-                                kwargs['recursion'] += 1
-                                data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                            else:
-                                break
+                        next_page = data_comments.get('paging', {}).get('next')
+                        if next_page is not None:
+                            kwargs['recursion'] += 1
+                            data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+                        else:
+                            break
 
-                        summary = Summary({'total_count': comments_reactions})
-                        getattr(kwargs.get('post'), 'comments_reactions')['total'] = summary
+                    summary = Summary({'total_count': comments_reactions})
+                    getattr(kwargs.get('post'), 'comments_reactions')['total'] = summary
 
-                        summary = Summary({'total_count': replies})
-                        getattr(kwargs.get('post'), 'replies')['total'] = summary
+                    summary = Summary({'total_count': replies})
+                    getattr(kwargs.get('post'), 'replies')['total'] = summary
 
-                        summary = Summary({'total_count': replies_reactions})
-                        getattr(kwargs.get('post'), 'replies_reactions')['total'] = summary
-                except Exception as e:
-                    print(1)
+                    summary = Summary({'total_count': replies_reactions})
+                    getattr(kwargs.get('post'), 'replies_reactions')['total'] = summary
+
         if recursion == 1:
             self.counter.increment()
             print(self.counter)

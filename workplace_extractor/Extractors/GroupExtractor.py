@@ -17,10 +17,8 @@ class GroupExtractor:
         logging.info('Starting groups extraction')
         call = self.call if call is None else call
 
-        http_calls = [{'url': self.extractor.graph_url + f'/community/groups?limit={per_page}' +
-                                                         '&fields=id,name,privacy,purpose,'
-                                                         'admins.limit(100){email},'
-                                                         'members.summary(1)',
+        http_calls = [{'url': self.extractor.graph_url + f'/community/groups?limit={per_page}&fields=id,name,privacy,'
+                                                         'purpose,admins.limit(100){email},members.summary(1)',
                        'call': call,
                        'groups': self.nodes,
                        'recursion': 1}]
