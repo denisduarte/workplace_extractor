@@ -30,6 +30,7 @@ class Extractor(object):
         self.max_recursion = int(kwargs.get('max_recursion'))
         self.max_http_retries = int(kwargs.get('max_http_retries'))
 
+        self.workplace_url = kwargs.get('workplace_url')
         self.graph_url = kwargs.get('graph_url')
         self.scim_url = kwargs.get('scim_url')
 
@@ -139,6 +140,7 @@ class Extractor(object):
                     if resp.status in [400, 401, 404]:
                         logging.warning(f'Response returned {resp.status} for {url}.')
                         data = pd.DataFrame({'Errors': resp.status}, index=[0])
+                        print('400')
                         return data
                     elif resp.status in [500]:
                         logging.error(f'Error 500 when calling {url}')

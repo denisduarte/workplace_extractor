@@ -58,11 +58,12 @@ class PersonExtractor:
     async def call(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'SCIM', **kwargs)
 
-        collection = NodeCollection()
-        if 'Resources' in data:
-            collection.extend([Person(self.extractor, person) for person in data['Resources']])
+        if data is not None:
+            collection = NodeCollection()
+            if 'Resources' in data:
+                collection.extend([Person(self.extractor, person) for person in data['Resources']])
 
-        kwargs.get('people').extend(collection)
+            kwargs.get('people').extend(collection)
 
         self.counter.increment()
         print(self.counter)

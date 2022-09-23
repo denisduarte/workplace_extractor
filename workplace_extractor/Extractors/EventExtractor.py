@@ -26,13 +26,11 @@ class EventExtractor:
 
         http_calls = []
         for node in self.people_extractor.nodes.nodes:
-            http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/events/attending?'
-                                                                 f'limit={per_page}'
-                                                                 f'&fields={fields}',
+            http_calls.append({'url': f'{self.extractor.graph_url}/{node.node_id}/events/attending?limit={per_page}'
+                                      f'&fields={fields}',
                                'call': self.call,
                                'node': node,
                                'recursion': 1})
-
         self.counter.label = 'Person'
         self.counter.total = len(http_calls)
         self.counter.count = 0
