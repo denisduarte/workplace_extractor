@@ -32,7 +32,7 @@ class InteractionExtractor:
             self.additional_attributes = pd.read_csv(extractor.additional_node_attributes, sep=';')
 
             self.node_additional_attribute_list = self.additional_attributes.columns.values.tolist()
-            self.node_additional_attribute_list.remove(extractor.joining_column)
+            self.node_additional_attribute_list.remove(extractor.additional_node_attributes_join)
 
     async def extract(self):
         post_extractor = PostExtractor(self.extractor)
@@ -286,14 +286,13 @@ class InteractionExtractor:
             attributes[attribute] = getattr(node, attribute)
 
         if self.additional_attributes is not None and self.node_additional_attribute_list:
-            current_row_loc = self.additional_attributes[extractor.joining_column] == getattr(
-                node, extractor.joining_column)
+            current_row_loc = self.additional_attributes[extractor.extractor.additional_node_attributes_join] == getattr(
+                node, extractor.extractor.additional_node_attributes_join)
 
             for attribute in self.node_additional_attribute_list:
                 if not self.additional_attributes.loc[current_row_loc, attribute].empty:
                     attributes[attribute] = self.additional_attributes.loc[current_row_loc, attribute].iloc[0]
                 else:
                     attributes[attribute] = ''
-                    print(f'{attribute} - {attributes["name"]} - {attributes["division"]}')
 
         return attributes

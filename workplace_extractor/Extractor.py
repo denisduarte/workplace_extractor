@@ -47,10 +47,10 @@ class Extractor(object):
         else:
             self.hashtags = []
 
-            # optional options
+        # optional options
         args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id',
                 'active_only', 'create_ranking', 'create_gexf', 'node_attributes', 'additional_node_attributes',
-                'joining_column', 'people_attributes_file', 'people_attributes_join']
+                'additional_node_attributes_join', 'additional_people_attributes', 'additional_people_attributes_join']
         for key, value in kwargs.items():
             if key in args:
                 setattr(self, key, value)

@@ -78,9 +78,9 @@ class Person(Author):
                       .get('claimed', np.nan)
         feed = PostCollection()
 
-        people_attributes = pd.read_csv(extractor.people_attributes_file, sep=';')
+        people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';')
 
-        join = extractor.people_attributes_join
+        join = extractor.additional_people_attributes_join
         for column in people_attributes.columns:
             if column != join:
                 join_value = data.get(join, '').lower()
