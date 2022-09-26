@@ -133,15 +133,15 @@ class InteractionExtractor:
 
         # set pagerank for directed version
         pagerank = nx.pagerank(net, alpha=0.85, weight='weight')
-        betweenness = nx.betweenness_centrality(net, weight='weight')
+        #betweenness = nx.betweenness_centrality(net, weight='weight')
         nx.set_node_attributes(net, pagerank, "pagerank")
-        nx.set_node_attributes(net, betweenness, "betweenness")
+        #nx.set_node_attributes(net, betweenness, "betweenness")
 
         # set pagerank for directed version
         pagerank = nx.pagerank(net_undirected, alpha=0.85, weight='weight')
-        betweenness = nx.betweenness_centrality(net_undirected, weight='weight')
+        #betweenness = nx.betweenness_centrality(net_undirected, weight='weight')
         nx.set_node_attributes(net_undirected, pagerank, "pagerank")
-        nx.set_node_attributes(net_undirected, betweenness, "betweenness")
+        #nx.set_node_attributes(net_undirected, betweenness, "betweenness")
 
         if self.extractor.create_gexf:
             nx.write_gexf(net, f'{self.extractor.config.get("MISC", "output_dir")}/net.gexf')
