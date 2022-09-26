@@ -144,8 +144,8 @@ class InteractionExtractor:
         #nx.set_node_attributes(net_undirected, betweenness, "betweenness")
 
         if self.extractor.create_gexf:
-            nx.write_gexf(net, f'{self.extractor.config.get("MISC", "output_dir")}/net.gexf')
-            nx.write_gexf(net_undirected, f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.gexf')
+            nx.write_gexf(net, f'{self.extractor.export_folder}/net.gexf')
+            nx.write_gexf(net_undirected, f'{self.extractor.export_folder}/net_undirected.gexf')
 
         self.net = net
         self.net_undirected = net_undirected
@@ -181,7 +181,7 @@ class InteractionExtractor:
                                                                        .cumcount() + 1
 
         ranking.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True) \
-               .to_csv(f'{self.extractor.config.get("MISC", "output_dir")}/rank_{net_type}.csv',
+               .to_csv(f'{self.extractor.export_folder}/rank_{net_type}.csv',
                        index=False,
                        sep=";",
                        float_format='%.15f')
