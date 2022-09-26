@@ -259,7 +259,7 @@ class InteractionExtractor:
 
         return data
 
-    def list_node_attributes(self, node, extractor):
+    def list_node_attributes(self, node):
 
         attributes = {}
 
