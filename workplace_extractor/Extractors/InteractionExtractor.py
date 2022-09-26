@@ -167,7 +167,7 @@ class InteractionExtractor:
         ranking = pd.DataFrame(data)
 
         # REMOVER
-        for aggregation_field in ['betweenness', 'pagerank']:
+        for aggregation_field in ['pagerank']: # ['betweenness', 'pagerank']:
             ranking = ranking.sort_values([aggregation_field], ascending=False)
             ranking = ranking.reset_index(drop=True)
             ranking[f'global_position_{aggregation_field}'] = ranking.index + 1
