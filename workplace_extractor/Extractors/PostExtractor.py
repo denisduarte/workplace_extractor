@@ -192,7 +192,6 @@ class PostExtractor:
 
             if recursion == 1:
                 self.counter.increment()
-                print(self.counter)
 
     async def call_info(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)

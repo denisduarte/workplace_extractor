@@ -197,16 +197,6 @@ class InteractionExtractor:
         for feed in self.feeds.nodes:
             if feed.feed is not None:
                 for post in feed.feed.nodes:
-
-                    if post.node_id == '916114762108595_1558775497842515':
-                        print(1)
-
-                    if len(post.comments.get('data').nodes) > 10:
-                        print(1)
-
-                    if len(post.comments.get('data').nodes) > 100:
-                        print(1)
-
                     df = self.update_summary_row('posts', df, post.author)
                     df = self.update_summary_row('posts_reactions', df, post.author,
                                                  len(post.reactions.get('data')))
@@ -267,8 +257,8 @@ class InteractionExtractor:
             attributes[attribute] = getattr(node, attribute)
 
         if self.additional_attributes is not None and self.node_additional_attribute_list:
-            current_row_loc = self.additional_attributes[self.additional_node_attributes_join] == getattr(
-                node, self.additional_node_attributes_join)
+            current_row_loc = self.additional_attributes[self.additional_attributes_join] == getattr(
+                node, self.additional_attributes_join)
 
             for attribute in self.node_additional_attribute_list:
                 if not self.additional_attributes.loc[current_row_loc, attribute].empty:

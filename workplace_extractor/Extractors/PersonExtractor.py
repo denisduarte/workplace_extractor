@@ -66,7 +66,6 @@ class PersonExtractor:
             kwargs.get('people').extend(collection)
 
         self.counter.increment()
-        print(self.counter)
 
     async def call_total(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'SCIM', **kwargs)
