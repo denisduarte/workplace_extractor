@@ -21,6 +21,7 @@ class InteractionExtractor:
         self.node_attribute_list = []
         self.node_additional_attribute_list = []
         self.additional_attributes = None
+        self.additional_attributes_join = extractor.additional_node_attributes_join
 
         # Attributes coming from the extraction
         if extractor.node_attributes:
@@ -28,7 +29,7 @@ class InteractionExtractor:
 
         # Additional attributes coming from a external file
 
-        if self.extractor.additional_node_attributes:
+        if extractor.additional_node_attributes:
             self.additional_attributes = pd.read_csv(extractor.additional_node_attributes, sep=';')
 
             self.node_additional_attribute_list = self.additional_attributes.columns.values.tolist()
@@ -39,37 +40,17 @@ class InteractionExtractor:
         await post_extractor.extract()
         self.feeds = post_extractor.nodes
 
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'wb') as handle:
-        #    pickle.dump(self.feeds, handle)
+        #user_summary = self.build_user_summary()
+        #self.nodes.nodes = user_summary
 
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/workplace_interactions.pickle', 'rb') as handle:
-        #    self.feeds = pickle.load(handle)
-        # print('aqui -1')
-        user_summary = self.build_user_summary()
-        self.nodes.nodes = user_summary
-        # return
-        # print('aqui 0')
         self.build_net()
 
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'wb') as handle:
-        #    pickle.dump(self.net, handle)
-
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net.pickle', 'rb') as handle:
-        #    self.net = pickle.load(handle)
-
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'wb') as handle:
-        #    pickle.dump(self.net_undirected, handle)
-
-        # with open(f'{self.extractor.config.get("MISC", "output_dir")}/net_undirected.pickle', 'rb') as handle:
-        #    self.net_undirected = pickle.load(handle)
-
         if self.extractor.create_ranking:
-            print('aqui 1')
             self.build_ranking(net_type='directed')
-            print('aqui 2')
             self.build_ranking(net_type='undirected')
 
-        self.nodes.nodes = user_summary
+        #self.nodes.nodes = user_summary
+        self.nodes.nodes = pd.DataFrame()
 
     @staticmethod
     def convert_to_undirected(g_directed):
@@ -99,7 +80,7 @@ class InteractionExtractor:
 
                         if post.comments['data'] is not None and post.comments['data'].nodes:
                             # add node for post author
-                            net.add_node(target, **self.list_node_attributes(post.author, self.extractor))
+                            net.add_node(target, **self.list_node_attributes(post.author))
 
                             for comment in post.comments['data'].nodes:
                                 # remove external users
@@ -108,7 +89,7 @@ class InteractionExtractor:
                                     source = comment.person.node_id
 
                                     # add node for comment author
-                                    net.add_node(source,  **self.list_node_attributes(comment.person, self.extractor))
+                                    net.add_node(source,  **self.list_node_attributes(comment.person))
 
                                     if net.has_edge(source, target):
                                         # we added this one before, just increase the weight by one
@@ -126,7 +107,7 @@ class InteractionExtractor:
                                 and post.reactions['data'] \
                                 and post.author.node_id != 'None':
                             # add node for post author
-                            net.add_node(target, **self.list_node_attributes(post.author, self.extractor))
+                            net.add_node(target, **self.list_node_attributes(post.author))
 
                             for reaction in post.reactions['data']:
                                 # remove external users
@@ -135,7 +116,7 @@ class InteractionExtractor:
                                     source = reaction.person.node_id
 
                                     # add node for reaction author
-                                    net.add_node(source, **self.list_node_attributes(reaction.person, self.extractor))
+                                    net.add_node(source, **self.list_node_attributes(reaction.person))
 
                                     if net.has_edge(source, target):
                                         # we added this one before, just increase the weight by one
@@ -286,8 +267,8 @@ class InteractionExtractor:
             attributes[attribute] = getattr(node, attribute)
 
         if self.additional_attributes is not None and self.node_additional_attribute_list:
-            current_row_loc = self.additional_attributes[extractor.extractor.additional_node_attributes_join] == getattr(
-                node, extractor.extractor.additional_node_attributes_join)
+            current_row_loc = self.additional_attributes[self.additional_node_attributes_join] == getattr(
+                node, self.additional_node_attributes_join)
 
             for attribute in self.node_additional_attribute_list:
                 if not self.additional_attributes.loc[current_row_loc, attribute].empty:
