@@ -40,8 +40,8 @@ class InteractionExtractor:
         await post_extractor.extract()
         self.feeds = post_extractor.nodes
 
-        #user_summary = self.build_user_summary()
-        #self.nodes.nodes = user_summary
+        user_summary = self.build_user_summary()
+        self.nodes.nodes = user_summary
 
         self.build_net()
 
@@ -49,8 +49,7 @@ class InteractionExtractor:
             self.build_ranking(net_type='directed')
             self.build_ranking(net_type='undirected')
 
-        #self.nodes.nodes = user_summary
-        self.nodes.nodes = pd.DataFrame()
+        self.nodes.nodes = user_summary
 
     @staticmethod
     def convert_to_undirected(g_directed):
