@@ -13,11 +13,11 @@ class GroupExtractor:
         self.extractor = extractor
         self.counter = Counter('Groups')
 
-    async def extract(self, per_page=100, call=None):
+    async def extract(self, items_per_page, call=None):
         logging.info('Starting groups extraction')
         call = self.call if call is None else call
 
-        http_calls = [{'url': self.extractor.graph_url + f'/community/groups?limit={per_page}&fields=id,name,privacy,'
+        http_calls = [{'url': self.extractor.graph_url + f'/community/groups?limit={items_per_page}&fields=id,name,privacy,'
                                                          'purpose,admins.limit(100){email},members.summary(1)',
                        'call': call,
                        'groups': self.nodes,
@@ -90,10 +90,10 @@ class MembersExtractor:
         self.nodes = PeopleCollection()
         self.extractor = extractor
 
-    async def extract(self, per_page=100, call=None):
+    async def extract(self, items_per_page, call=None):
         call = self.call if call is None else call
 
-        http_calls = [{'url': self.extractor.graph_url + f'/{self.group_id}/members?limit={per_page}' +
+        http_calls = [{'url': self.extractor.graph_url + f'/{self.group_id}/members?limit={items_per_page}' +
                                                          '&fields=id,administrator,joined,added_by,'
                                                          'name,email,division,department,title,active',
                        'call': call,

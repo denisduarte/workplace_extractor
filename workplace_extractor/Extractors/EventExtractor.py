@@ -17,16 +17,16 @@ class EventExtractor:
         self.total = np.nan
         self.counter = Counter('Events')
 
-    async def extract(self, per_page=100):
+    async def extract(self, items_per_page):
         logging.info('Starting groups extraction')
 
-        await self.people_extractor.extract()
+        await self.people_extractor.extract(items_per_page=items_per_page)
 
         fields = 'id, name,start_time,end_time,description,type,owner'
 
         http_calls = []
         for node in self.people_extractor.nodes.nodes:
-            http_calls.append({'url': f'{self.extractor.graph_url}/{node.node_id}/events/attending?limit={per_page}'
+            http_calls.append({'url': f'{self.extractor.graph_url}/{node.node_id}/events/attending?limit={items_per_page}'
                                       f'&fields={fields}',
                                'call': self.call,
                                'node': node,

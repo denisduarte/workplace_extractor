@@ -11,13 +11,13 @@ class CommentExtractor:
         self.extractor = extractor
         self.nodes = CommentCollection()
 
-    async def extract(self):
+    async def extract(self, items_per_page):
         logging.info('Loading comments extraction')
 
         post_extractor = PostExtractor(extractor=self.extractor)
 
         people_extractor = PersonExtractor(self.extractor)
-        await people_extractor.extract()
+        await people_extractor.extract(items_per_page=items_per_page)
 
         post_extractor.nodes.extend(people_extractor.nodes)
 
@@ -48,7 +48,7 @@ class CommentExtractor:
                  '}'
 
         http_calls = [{'url': self.extractor.graph_url + f'/{self.extractor.post_id}/comments'
-                                                         f'?limit=100&fields={fields}',
+                                                         f'?limit={items_per_page}&fields={fields}',
                        'call': self.call,
                        'node': feed,
                        'postExtractor': post_extractor,

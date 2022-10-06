@@ -22,22 +22,21 @@ class PostExtractor:
         self.filter_ids = []
         self.counter = Counter('Posts')
 
-    async def extract(self):
+    async def extract(self, items_per_page):
         # fields that should be extracted from posts using the GRAPH API
         fields = 'id,from,type,created_time,status_type,object_id,link,message,story'
-        per_page = 50
 
         # Extract all groups
         logging.info('Loading group feeds')
         group_extractor = GroupExtractor(self.extractor)
-        await group_extractor.extract()
+        await group_extractor.extract(items_per_page=items_per_page)
         self.nodes.extend(group_extractor.nodes)
         logging.info('Group feeds loaded')
 
         # Extract all workplace members
         logging.info('Loading person feeds')
         people_extractor = PersonExtractor(self.extractor)
-        await people_extractor.extract()
+        await people_extractor.extract(items_per_page=items_per_page)
         self.nodes.extend(people_extractor.nodes)
         logging.info('Person feeds loaded')
 
@@ -58,7 +57,7 @@ class PostExtractor:
                 exit(0)
 
             http_calls = [{'url': self.extractor.graph_url + f'/{node.node_id}/feed'
-                                                             f'?limit={per_page}'
+                                                             f'?limit={items_per_page}'
                                                              f'&fields={fields}'
                                                              f'&since={self.extractor.since}'
                                                              f'&until={self.extractor.until}',
@@ -77,7 +76,7 @@ class PostExtractor:
             http_calls = []
             for node in group_extractor.nodes.nodes:
                 http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/feed'
-                                                                     f'?limit={per_page}'
+                                                                     f'?limit={items_per_page}'
                                                                      f'&fields={fields}'
                                                                      f'&since={self.extractor.since}'
                                                                      f'&until={self.extractor.until}',
@@ -95,7 +94,7 @@ class PostExtractor:
             http_calls = []
             for node in people_extractor.nodes.nodes:
                 http_calls.append({'url': self.extractor.graph_url + f'/{node.node_id}/feed'
-                                                                     f'?limit={per_page}'
+                                                                     f'?limit={items_per_page}'
                                                                      f'&fields={fields}'
                                                                      f'&since={self.extractor.since}'
                                                                      f'&until={self.extractor.until}',

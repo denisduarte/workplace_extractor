@@ -26,6 +26,7 @@ class Extractor(object):
         self.export_folder = kwargs.get('export_folder')
 
         self.export_content = kwargs.get('export_content', False)
+        self.items_per_page = kwargs.get('items_per_page', False)
 
         self.max_recursion = int(kwargs.get('max_recursion'))
         self.max_http_retries = int(kwargs.get('max_http_retries'))
@@ -93,7 +94,7 @@ class Extractor(object):
         elif self.export == 'Interactions':
             extractor = InteractionExtractor(extractor=self)
 
-        await extractor.extract()
+        await extractor.extract(items_per_page=self.items_per_page)
 
         nodes_pd = extractor.nodes.to_pandas(self)
         nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True)

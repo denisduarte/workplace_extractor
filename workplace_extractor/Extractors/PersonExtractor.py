@@ -19,18 +19,18 @@ class PersonExtractor:
         self.nodes = PeopleCollection()
         self.counter = Counter('Person')
 
-    async def extract(self, per_page=100, call=None):
+    async def extract(self, items_per_page, call=None):
         logging.info('Starting people extraction')
         call = self.call if call is None else call
 
         await self.fetch_total()
 
         http_calls = []
-        starts = np.arange(1, self.total + 1, step=per_page)
+        starts = np.arange(1, self.total + 1, step=items_per_page)
         iterator = np.nditer(starts, flags=['f_index'])
 
         for start in iterator:
-            http_calls.append({'url': self.extractor.scim_url + f'?count={per_page}&startIndex={start}',
+            http_calls.append({'url': self.extractor.scim_url + f'?count={items_per_page}&startIndex={start}',
                                'call': call,
                                'people': self.nodes})
 

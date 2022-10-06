@@ -35,9 +35,9 @@ class InteractionExtractor:
             self.node_additional_attribute_list = self.additional_attributes.columns.values.tolist()
             self.node_additional_attribute_list.remove(extractor.additional_node_attributes_join)
 
-    async def extract(self):
+    async def extract(self, items_per_page):
         post_extractor = PostExtractor(self.extractor)
-        await post_extractor.extract()
+        await post_extractor.extract(items_per_page)
         self.feeds = post_extractor.nodes
 
         user_summary = self.build_user_summary()
