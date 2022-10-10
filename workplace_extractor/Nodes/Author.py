@@ -83,15 +83,16 @@ class Person(Author):
         feed = PostCollection()
 
         if hasattr(extractor, 'additional_people_attributes'):
-            people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';')
-            join = extractor.additional_people_attributes_join
-            for column in people_attributes.columns:
-                if column != join:
-                    join_value = data.get(join, '').lower()
-                    try:
-                        setattr(self, column, people_attributes[people_attributes[join] == join_value][column].values[0])
-                    except IndexError:
-                        setattr(self, column, '')
+            if extractor.additional_people_attributes:
+                people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';')
+                join = extractor.additional_people_attributes_join
+                for column in people_attributes.columns:
+                    if column != join:
+                        join_value = data.get(join, '').lower()
+                        try:
+                            setattr(self, column, people_attributes[people_attributes[join] == join_value][column].values[0])
+                        except IndexError:
+                            setattr(self, column, '')
 
         Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
