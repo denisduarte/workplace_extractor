@@ -31,7 +31,6 @@ class Author(Node):
             'name': self.name,
             'type': self.author_type,
             'title': self.title,
-            'manager_level': self.manager_level,
             'active': self.active,
             'division': self.division,
             'department': self.department,
@@ -42,6 +41,11 @@ class Author(Node):
             'invite_date': self.invite_date,
             'claimed': self.claimed
         }
+
+        if hasattr(extractor, 'additional_people_attributes'):
+            people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';', nrows=0).columns.tolist()
+            for column in people_attributes:
+                as_dict[column] = getattr(self, column)
 
         if extractor.export == 'POSTS' and self.feed is not None and origin == 'extractor':
             as_dict['feed'] = [post.to_dict(extractor) for post in self.feed.nodes]
