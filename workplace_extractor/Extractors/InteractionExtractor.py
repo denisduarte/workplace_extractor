@@ -3,7 +3,7 @@ from ..Nodes.NodeCollection import PostCollection, NodeCollection, InteractionCo
 
 import pandas as pd
 import networkx as nx
-# import pickle
+import pickle
 
 
 class InteractionExtractor:
@@ -39,6 +39,9 @@ class InteractionExtractor:
         post_extractor = PostExtractor(self.extractor)
         await post_extractor.extract(items_per_page)
         self.feeds = post_extractor.nodes
+
+        with open(f'data.pickle', 'wb') as picke_file:
+            pickle.dump(self.feeds , picke_file)
 
         user_summary = self.build_user_summary()
         self.nodes.nodes = user_summary
