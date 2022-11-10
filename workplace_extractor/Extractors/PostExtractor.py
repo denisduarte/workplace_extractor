@@ -42,7 +42,7 @@ class PostExtractor:
         logging.info('Person feeds loaded')
 
         if feed_id := self.extractor.feed_id:
-            # if an feed_id was passed, extract only posts published in this feed
+            # if an feed_id was passed as parameter, extract only posts published in this feed
 
             logging.info(f'Extracting posts from feed {feed_id}')
 

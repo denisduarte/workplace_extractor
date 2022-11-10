@@ -36,12 +36,15 @@ class InteractionExtractor:
             self.node_additional_attribute_list.remove(extractor.additional_node_attributes_join)
 
     async def extract(self, items_per_page):
-        post_extractor = PostExtractor(self.extractor)
-        await post_extractor.extract(items_per_page)
-        self.feeds = post_extractor.nodes
+        #post_extractor = PostExtractor(self.extractor)
+        #await post_extractor.extract(items_per_page)
+        #self.feeds = post_extractor.nodes
 
-        with open(f'data.pickle', 'wb') as picke_file:
-            pickle.dump(self.feeds , picke_file)
+        #with open(f'data2.pickle', 'wb') as picke_file:
+        #    pickle.dump(self.feeds , picke_file)
+
+        #with open(f'data.pickle', 'rb') as picke_file:
+        #    self.feeds = pickle.load(picke_file)
 
         user_summary = self.build_user_summary()
         self.nodes.nodes = user_summary
@@ -76,7 +79,8 @@ class InteractionExtractor:
         for node in self.feeds.nodes:
             if node.feed is not None and node.feed.nodes:
                 for post in node.feed.nodes:
-                    if post.author.node_id != 'None' and (post.author.active or include_inactive):
+
+                    if post.author is not None and post.author.node_id != 'None' and (post.author.active or include_inactive):
 
                         target = post.author.node_id
 
@@ -124,12 +128,15 @@ class InteractionExtractor:
                                         # we added this one before, just increase the weight by one
                                         net.edges[source, target]['weight'] += float(self.extractor.reaction_weight)
                                     else:
+                                        try:
                                         # new edge. add with weight=1
-                                        net.add_edge(source, target, weight=float(self.extractor.reaction_weight),
-                                                     source_division=net.nodes[source]['division'],
-                                                     source_diretoria=net.nodes[source]['Diretoria'],
-                                                     target_division=net.nodes[target]['division'],
-                                                     target_diretoria=net.nodes[target]['Diretoria'])
+                                            net.add_edge(source, target, weight=float(self.extractor.reaction_weight),
+                                                         source_division=net.nodes[source]['division'],
+                                                         source_diretoria=net.nodes[source]['Diretoria'],
+                                                         target_division=net.nodes[target]['division'],
+                                                         target_diretoria=net.nodes[target]['Diretoria'])
+                                        except:
+                                            print(1)
 
         net_undirected = self.convert_to_undirected(net)
 
@@ -234,6 +241,8 @@ class InteractionExtractor:
     def update_summary_row(action, data, user, total=1):
 
         # if user is external, ignore
+        if user is None:
+            return data
         if user.author_type == 'Bot/Ext':
             return data
 
