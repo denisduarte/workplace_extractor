@@ -36,9 +36,9 @@ class InteractionExtractor:
             self.node_additional_attribute_list.remove(extractor.additional_node_attributes_join)
 
     async def extract(self, items_per_page):
-        #post_extractor = PostExtractor(self.extractor)
-        #await post_extractor.extract(items_per_page)
-        #self.feeds = post_extractor.nodes
+        post_extractor = PostExtractor(self.extractor)
+        await post_extractor.extract(items_per_page)
+        self.feeds = post_extractor.nodes
 
         #with open(f'data2.pickle', 'wb') as picke_file:
         #    pickle.dump(self.feeds , picke_file)
