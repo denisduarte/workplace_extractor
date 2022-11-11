@@ -40,14 +40,14 @@ class InteractionExtractor:
         await post_extractor.extract(items_per_page)
         self.feeds = post_extractor.nodes
 
-        #with open(f'data2.pickle', 'wb') as picke_file:
-        #    pickle.dump(self.feeds , picke_file)
+        with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'wb') as picke_file:
+            pickle.dump(self.feeds , picke_file)
 
         #with open(f'data.pickle', 'rb') as picke_file:
         #    self.feeds = pickle.load(picke_file)
 
-        user_summary = self.build_user_summary()
-        self.nodes.nodes = user_summary
+        #user_summary = self.build_user_summary()
+        #self.nodes.nodes = user_summary
 
         self.build_net()
 
@@ -55,7 +55,7 @@ class InteractionExtractor:
             self.build_ranking(net_type='directed')
             self.build_ranking(net_type='undirected')
 
-        self.nodes.nodes = user_summary
+        #self.nodes.nodes = user_summary
 
     @staticmethod
     def convert_to_undirected(g_directed):
