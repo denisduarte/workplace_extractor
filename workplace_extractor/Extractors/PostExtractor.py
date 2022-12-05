@@ -90,7 +90,6 @@ class PostExtractor:
 
             await self.extractor.fetch(http_calls)
 
-            """"""
             logging.info(f'Extracting posts from {len(people_extractor.nodes.nodes)} people.')
             http_calls = []
             for node in people_extractor.nodes.nodes:
@@ -108,8 +107,6 @@ class PostExtractor:
             self.counter.count = 0
 
             await self.extractor.fetch(http_calls)
-
-            """"""
 
         # Add view, reactions, comments and authors
         await self.fetch_posts_info()
@@ -197,128 +194,114 @@ class PostExtractor:
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
         if data is not None:
-            try:
-                await self.call_info_views(data.get('seen', {}), session, **kwargs)
-                await self.call_info_reactions(data.get('reactions', {}), session, **kwargs)
-                await self.call_info_comments(data.get('comments', {}), session, **kwargs)
-            except Exception as e:
-                print(1)
+            await self.call_info_views(data.get('seen', {}), session, **kwargs)
+            await self.call_info_reactions(data.get('reactions', {}), session, **kwargs)
+            await self.call_info_comments(data.get('comments', {}), session, **kwargs)
 
         self.counter.increment()
         print(self.counter)
 
     async def call_info_views(self, data, session, **kwargs):
+        if 'data' in data:
+            for item in data['data']:
+                view = View()
+                self.set_author(item, view, 'seen')
 
-        try:
-            if 'data' in data:
-                for item in data['data']:
-                    view = View()
-                    self.set_author(item, view, 'seen')
+                kwargs.get('post').seen['data'].append(view)
 
-                    kwargs.get('post').seen['data'].append(view)
+        next_page = data.get('paging', {}).get('next')
+        if next_page is not None:
+            kwargs['recursion'] += 1
 
-            next_page = data.get('paging', {}).get('next')
-            if next_page is not None:
-                kwargs['recursion'] += 1
-
-                new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                if new_data is not None:
-                    await self.call_info_views(new_data, session, **kwargs)
-        except Exception as e:
-            print(1)
+            new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+            if new_data is not None:
+                await self.call_info_views(new_data, session, **kwargs)
 
     async def call_info_reactions(self, data, session, **kwargs):
+        if 'data' in data:
+            for item in data['data']:
+                reaction = Reaction(item)
+                self.set_author(item, reaction, 'reactions')
 
-        try:
-            if 'data' in data:
-                for item in data['data']:
-                    reaction = Reaction(item)
-                    self.set_author(item, reaction, 'reactions')
+                kwargs.get('post').reactions['data'].append(reaction)
 
-                    kwargs.get('post').reactions['data'].append(reaction)
+        next_page = data.get('paging', {}).get('next')
+        if next_page is not None:
+            kwargs['recursion'] += 1
 
-            next_page = data.get('paging', {}).get('next')
-            if next_page is not None:
-                kwargs['recursion'] += 1
-
-                new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                if new_data is not None:
-                    await self.call_info_reactions(new_data, session, **kwargs)
-        except Exception as e:
-            print(1)
+            new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+            if new_data is not None:
+                await self.call_info_reactions(new_data, session, **kwargs)
 
     async def call_info_comments(self, data, session, **kwargs):
 
-        try:
-            if isinstance(data, list):
-                data = {'data': data}
+        if isinstance(data, list):
+            data = {'data': data}
 
-            if 'data' in data:
-                for item in data['data']:
-                    comment = Comment(item)
-                    self.set_author(item, comment, 'comments')
+        if 'data' in data:
+            for item in data['data']:
+                comment = Comment(item)
+                self.set_author(item, comment, 'comments')
 
-                    if item.get('reactions', {}).get('data'):
-                        data_reactions = item.get('reactions', {})
-                        while True:
-                            for item_reaction in data_reactions.get('data'):
-                                reaction = Reaction(item_reaction)
-                                self.set_author(item_reaction, reaction, 'reactions')
+                if item.get('reactions', {}).get('data'):
+                    data_reactions = item.get('reactions', {})
+                    while True:
+                        for item_reaction in data_reactions.get('data'):
+                            reaction = Reaction(item_reaction)
+                            self.set_author(item_reaction, reaction, 'reactions')
 
-                                comment.reactions.append(reaction)
+                            comment.reactions.append(reaction)
 
-                            next_page = data_reactions.get('paging', {}).get('next')
-                            if next_page is not None:
-                                kwargs['recursion'] += 1
+                        next_page = data_reactions.get('paging', {}).get('next')
+                        if next_page is not None:
+                            kwargs['recursion'] += 1
 
-                                data_reactions = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                            else:
-                                break
+                            data_reactions = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+                        else:
+                            break
 
-                    if item.get('comments', {}).get('data'):
-                        data_comments = item.get('comments', {})
-                        while True:
-                            for item_comment in data_comments.get('data'):
-                                reply = Comment(item_comment)
-                                self.set_author(item_comment, reply, 'comments')
+                if item.get('comments', {}).get('data'):
+                    data_comments = item.get('comments', {})
+                    while True:
+                        for item_comment in data_comments.get('data'):
+                            reply = Comment(item_comment)
+                            self.set_author(item_comment, reply, 'comments')
 
-                                if item_comment.get('reactions', {}).get('data'):
-                                    data_comment_reactions = item_comment.get('reactions', {})
-                                    while True:
-                                        for item_comment_reaction in data_comment_reactions.get('data'):
-                                            reaction = Reaction(item_comment_reaction)
-                                            self.set_author(item_comment_reaction, reaction, 'reactions')
+                            if item_comment.get('reactions', {}).get('data'):
+                                data_comment_reactions = item_comment.get('reactions', {})
+                                while True:
+                                    for item_comment_reaction in data_comment_reactions.get('data'):
+                                        reaction = Reaction(item_comment_reaction)
+                                        self.set_author(item_comment_reaction, reaction, 'reactions')
 
-                                            reply.reactions.append(reaction)
+                                        reply.reactions.append(reaction)
 
-                                        next_page = data_comment_reactions.get('paging', {}).get('next')
-                                        if next_page is not None:
-                                            kwargs['recursion'] += 1
-                                            data_comment_reactions = await self.extractor.fetch_url(next_page,
-                                                                                                    session,
-                                                                                                    'GRAPH',
-                                                                                                    **kwargs)
-                                        else:
-                                            break
+                                    next_page = data_comment_reactions.get('paging', {}).get('next')
+                                    if next_page is not None:
+                                        kwargs['recursion'] += 1
+                                        data_comment_reactions = await self.extractor.fetch_url(next_page,
+                                                                                                session,
+                                                                                                'GRAPH',
+                                                                                                **kwargs)
+                                    else:
+                                        break
 
-                                comment.comments.extend(reply)
+                            comment.comments.extend(reply)
 
-                            next_page = data_comments.get('paging', {}).get('next')
-                            if next_page is not None:
-                                kwargs['recursion'] += 1
-                                data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                            else:
-                                break
+                        next_page = data_comments.get('paging', {}).get('next')
+                        if next_page is not None:
+                            kwargs['recursion'] += 1
+                            data_comments = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+                        else:
+                            break
 
-                    kwargs.get('post').comments['data'].extend(comment)
+                kwargs.get('post').comments['data'].extend(comment)
 
-            next_page = data.get('paging', {}).get('next')
-            if next_page is not None:
-                new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
-                if new_data is not None:
-                    await self.call_info_comments(new_data, session, **kwargs)
-        except Exception as e:
-            print(1)
+        next_page = data.get('paging', {}).get('next')
+        if next_page is not None:
+            new_data = await self.extractor.fetch_url(next_page, session, 'GRAPH', **kwargs)
+            if new_data is not None:
+                await self.call_info_comments(new_data, session, **kwargs)
 
     async def call_bot(self, url, session, **kwargs):
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
@@ -359,8 +342,9 @@ class PostExtractor:
                     comments_reactions = 0
                     replies = 0
                     replies_reactions = 0
+
                     while True:
-                        for comment in data_comments['data']:
+                        for comment in data_comments.get('data', []):
                             comments_reactions += comment.get('reactions', {}) \
                                 .get('summary', {}) \
                                 .get('total_count', 0)
@@ -371,7 +355,7 @@ class PostExtractor:
                             data_replies = comment.get('comments')
                             if 'data' in data_replies and data_replies['data']:
                                 while True:
-                                    for reply in data_replies['data']:
+                                    for reply in data_replies.get('data', []):
                                         replies_reactions += reply.get('reactions', {}) \
                                             .get('summary', {}) \
                                             .get('total_count', 0)

@@ -3,7 +3,6 @@ from ..Nodes.NodeCollection import PostCollection, NodeCollection, InteractionCo
 
 import pandas as pd
 import networkx as nx
-import pickle
 
 
 class InteractionExtractor:
@@ -40,11 +39,11 @@ class InteractionExtractor:
         await post_extractor.extract(items_per_page)
         self.feeds = post_extractor.nodes
 
-        #with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'wb') as picke_file:
+        # with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'wb') as picke_file:
         #    pickle.dump(self.feeds , picke_file)
-        #with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'rb') as picke_file:
+        # with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'rb') as picke_file:
         #    self.feeds = pickle.load(picke_file)
-        #with open(f'data.pickle', 'rb') as picke_file:
+        # with open(f'data.pickle', 'rb') as picke_file:
         #    self.feeds = pickle.load(picke_file)
 
         user_summary = self.build_user_summary()
@@ -129,29 +128,26 @@ class InteractionExtractor:
                                         # we added this one before, just increase the weight by one
                                         net.edges[source, target]['weight'] += float(self.extractor.reaction_weight)
                                     else:
-                                        try:
                                         # new edge. add with weight=1
-                                            net.add_edge(source, target, weight=float(self.extractor.reaction_weight),
-                                                         source_division=net.nodes[source]['division'],
-                                                         source_diretoria=net.nodes[source]['Diretoria'],
-                                                         target_division=net.nodes[target]['division'],
-                                                         target_diretoria=net.nodes[target]['Diretoria'])
-                                        except:
-                                            print(1)
+                                        net.add_edge(source, target, weight=float(self.extractor.reaction_weight),
+                                                     source_division=net.nodes[source]['division'],
+                                                     source_diretoria=net.nodes[source]['Diretoria'],
+                                                     target_division=net.nodes[target]['division'],
+                                                     target_diretoria=net.nodes[target]['Diretoria'])
 
         net_undirected = self.convert_to_undirected(net)
 
         # set pagerank for directed version
         pagerank = nx.pagerank(net, alpha=0.85, weight='weight')
-        #betweenness = nx.betweenness_centrality(net, weight='weight')
+        # betweenness = nx.betweenness_centrality(net, weight='weight')
         nx.set_node_attributes(net, pagerank, "pagerank")
-        #nx.set_node_attributes(net, betweenness, "betweenness")
+        # nx.set_node_attributes(net, betweenness, "betweenness")
 
         # set pagerank for directed version
         pagerank = nx.pagerank(net_undirected, alpha=0.85, weight='weight')
-        #betweenness = nx.betweenness_centrality(net_undirected, weight='weight')
+        # betweenness = nx.betweenness_centrality(net_undirected, weight='weight')
         nx.set_node_attributes(net_undirected, pagerank, "pagerank")
-        #nx.set_node_attributes(net_undirected, betweenness, "betweenness")
+        # nx.set_node_attributes(net_undirected, betweenness, "betweenness")
 
         if self.extractor.create_gexf:
             nx.write_gexf(net, f'{self.extractor.export_folder}/net.gexf')

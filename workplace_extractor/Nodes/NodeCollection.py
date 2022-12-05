@@ -1,7 +1,6 @@
 from workplace_extractor.Nodes.Node import Node
 
 import pandas as pd
-import logging
 
 
 class NodeCollection:
@@ -167,7 +166,6 @@ class PostCollection(NodeCollection):
                             count = df.at[post.author.node_id, 'view'].get(view.person.node_id, 0)
                             df.at[post.author.node_id, 'view'][view.person.node_id] = count + 1
         return df
-
 
 
 class CommentCollection(NodeCollection):
