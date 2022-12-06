@@ -11,10 +11,11 @@
 *.csv
 
 main.py
-setup2.py
-analise.py
-run.py
 app.py
+
+diretorias.csv
+people_attributes.csv.csv
+
 
 *.c
 *.cpython-38-darwin.so

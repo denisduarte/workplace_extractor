@@ -39,12 +39,7 @@ class InteractionExtractor:
         await post_extractor.extract(items_per_page)
         self.feeds = post_extractor.nodes
 
-        # with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'wb') as picke_file:
-        #    pickle.dump(self.feeds , picke_file)
-        # with open(f'{self.extractor.export_folder}/interactions-data.pickle', 'rb') as picke_file:
-        #    self.feeds = pickle.load(picke_file)
-        # with open(f'data.pickle', 'rb') as picke_file:
-        #    self.feeds = pickle.load(picke_file)
+
 
         user_summary = self.build_user_summary()
         self.nodes.nodes = user_summary
