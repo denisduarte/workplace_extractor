@@ -98,6 +98,8 @@ class Extractor(object):
         nodes_pd = extractor.nodes.to_pandas(self)
         nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True)
 
+        print('done')
+
         return nodes_pd
 
     async def fetch(self, http_calls):
