@@ -1,7 +1,6 @@
 from .Extractors import PostExtractor, CommentExtractor, GroupExtractor, MembersExtractor
 from .Extractors import PersonExtractor, InteractionExtractor, EventExtractor
 
-# import pickle
 import sys
 import os
 import logging
