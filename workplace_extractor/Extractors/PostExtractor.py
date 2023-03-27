@@ -9,6 +9,8 @@ from ..Counter import Counter
 import logging
 import pandas as pd
 
+import pickle
+
 
 class PostExtractor:
     def __init__(self, extractor):
@@ -245,7 +247,7 @@ class PostExtractor:
 
                 if item.get('reactions', {}).get('data'):
                     data_reactions = item.get('reactions', {})
-                    while True:
+                    while data_reactions is not None:
                         for item_reaction in data_reactions.get('data'):
                             reaction = Reaction(item_reaction)
                             self.set_author(item_reaction, reaction, 'reactions')
@@ -262,14 +264,14 @@ class PostExtractor:
 
                 if item.get('comments', {}).get('data'):
                     data_comments = item.get('comments', {})
-                    while True:
+                    while data_comments is not None:
                         for item_comment in data_comments.get('data'):
                             reply = Comment(item_comment)
                             self.set_author(item_comment, reply, 'comments')
 
                             if item_comment.get('reactions', {}).get('data'):
                                 data_comment_reactions = item_comment.get('reactions', {})
-                                while True:
+                                while data_comment_reactions is not None:
                                     for item_comment_reaction in data_comment_reactions.get('data'):
                                         reaction = Reaction(item_comment_reaction)
                                         self.set_author(item_comment_reaction, reaction, 'reactions')
@@ -343,7 +345,7 @@ class PostExtractor:
                     replies = 0
                     replies_reactions = 0
 
-                    while True:
+                    while 'data' in data_comments and data_comments['data'] is not None:
                         for comment in data_comments.get('data', []):
                             comments_reactions += comment.get('reactions', {}) \
                                 .get('summary', {}) \
@@ -354,7 +356,7 @@ class PostExtractor:
 
                             data_replies = comment.get('comments')
                             if 'data' in data_replies and data_replies['data']:
-                                while True:
+                                while data_replies['data'] is not None:
                                     for reply in data_replies.get('data', []):
                                         replies_reactions += reply.get('reactions', {}) \
                                             .get('summary', {}) \

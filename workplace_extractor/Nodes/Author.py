@@ -44,9 +44,14 @@ class Author(Node):
 
         if hasattr(extractor, 'additional_people_attributes'):
             if extractor.additional_people_attributes:
-                people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';', nrows=0).columns.tolist()
-                for column in people_attributes:
-                    as_dict[column] = getattr(self, column)
+                files = extractor.additional_people_attributes.split(',')
+
+                for file in files:
+                    # get the names of the additional attributes and remove first column (used as join)
+                    people_attributes = pd.read_csv(file, sep=';', nrows=0).columns.tolist()[1:]
+
+                    for column in people_attributes:
+                        as_dict[column] = getattr(self, column)
 
         if extractor.export == 'POSTS' and self.feed is not None and origin == 'extractor':
             as_dict['feed'] = [post.to_dict(extractor) for post in self.feed.nodes]
@@ -58,19 +63,19 @@ class Person(Author):
 
     def __init__(self, extractor, data):
         node_id = str(data.get('id'))
-        name = data.get('name', {}).get('formatted', np.nan)
-        author_type = data.get('userType', np.nan)
-        email = data.get('userName', np.nan)
-        title = data.get('title', np.nan)
-        active = data.get('active', np.nan)
-        division = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('division', np.nan)
-        department = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('department', np.nan)
+        name = data.get('name', {}).get('formatted', '')
+        author_type = data.get('userType', '')
+        email = data.get('userName', '')
+        title = data.get('title', '')
+        active = data.get('active', '')
+        division = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('division', '')
+        department = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('department', '')
         building = None
         for address in data.get('addresses', []):
             if address.get('type') == 'work':
                 building = address.get('formatted')
-        emp_num = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('employeeNumber', np.nan)
-        invited = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('invited', np.nan)
+        emp_num = data.get('urn:ietf:params:scim:schemas:extension:enterprise:2.0:User', {}).get('employeeNumber', '')
+        invited = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('invited', '')
         date = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {}).get('inviteDate', '')
         #invite_date = datetime.utcfromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -80,23 +85,32 @@ class Person(Author):
             invite_date = ''
 
         claimed = data.get('urn:ietf:params:scim:schemas:extension:facebook:accountstatusdetails:2.0:User', {})\
-                      .get('claimed', np.nan)
+                      .get('claimed', '')
         feed = PostCollection()
-
-        if hasattr(extractor, 'additional_people_attributes'):
-            if extractor.additional_people_attributes:
-                people_attributes = pd.read_csv(extractor.additional_people_attributes, sep=';')
-                join = extractor.additional_people_attributes_join
-                for column in people_attributes.columns:
-                    if column != join:
-                        join_value = data.get(join, '').lower()
-                        try:
-                            setattr(self, column, people_attributes[people_attributes[join] == join_value][column].values[0])
-                        except IndexError:
-                            setattr(self, column, '')
 
         Author.__init__(self, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
+
+        self.set_additional_attributes(extractor)
+
+    def set_additional_attributes(self, extractor):
+
+        if hasattr(extractor, 'additional_people_attributes'):
+            if extractor.additional_people_attributes:
+                files = extractor.additional_people_attributes.split(',')
+
+                for file in files:
+                    people_attributes = pd.read_csv(file, sep=';')
+                    join = people_attributes.columns[0]
+
+                    for column in people_attributes.columns:
+                        if column != join:
+                            join_value = getattr(self, join)
+                            try:
+                                value_index = people_attributes[join].str.lower() == join_value.lower()
+                                setattr(self, column, people_attributes[value_index][column].values[0])
+                            except IndexError:
+                                setattr(self, column, '')
 
 
 class Bot(Author):

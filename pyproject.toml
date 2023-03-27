@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "workplace_extractor"
-version = "0.8.50"
+version = "0.8.53"
 description = "Extract data created in a corporate Workplace by Facebook installation using the Graph/SCIM APIs"
 license = "MIT"
 authors = ["Denis Duarte <den.duarte@gmail.com>",]
@@ -19,7 +19,6 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-pyhton = "^3.8"
 numpy = "^1.20"
 pandas = "^1.2"
 aiohttp = "^3.7"
