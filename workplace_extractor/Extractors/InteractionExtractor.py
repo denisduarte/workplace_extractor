@@ -13,9 +13,9 @@ class InteractionExtractor:
         self.extractor = extractor
 
         self.feeds = PostCollection()
-        self.pagerank = None
-
         self.nodes = InteractionCollection()
+        self.net_directed = None
+        self.net_undirected = None
 
         # Create list of node attributes
         self.node_attribute_list = []
@@ -33,11 +33,11 @@ class InteractionExtractor:
         #    self.feeds = pickle.load(picke_file)
 
         print('starting build net')
-        net_undirected, net_directed = self.build_net()
+        self.net_undirected, self.net_directed = self.build_net()
 
         # get a list of person fields from either net, ignoring pagerank
         nodes = []
-        for person_id, attributes in dict(net_undirected.nodes(data=True)).items():
+        for person_id, attributes in dict(self.net_undirected.nodes(data=True)).items():
             row = {'node_id': person_id, **attributes}
             row.pop('pagerank', None)
             nodes.append(row)
@@ -45,8 +45,8 @@ class InteractionExtractor:
         nodes = pd.DataFrame(nodes).set_index('node_id', drop=False)
 
         print('starting build rank')
-        ranking_directed = self.build_ranking(net_directed)
-        ranking_undirected = self.build_ranking(net_undirected)
+        ranking_directed = self.build_ranking(self.net_directed)
+        ranking_undirected = self.build_ranking(self.net_undirected)
 
         ranking = ranking_directed.merge(ranking_undirected,
                                          left_index=True, right_index=True,
@@ -79,11 +79,6 @@ class InteractionExtractor:
     def build_net(self, include_inactive=False):
         # Build the net
         net = nx.DiGraph()
-
-        if not hasattr(self.extractor, 'create_gexf'):
-            self.extractor.create_gexf = False
-        if not hasattr(self.extractor, 'create_ranking'):
-            self.extractor.create_ranking = False
 
         for node in self.feeds.nodes:
             if node.feed is not None and node.feed.nodes:
@@ -145,10 +140,6 @@ class InteractionExtractor:
         # set pagerank for directed version
         pagerank = nx.pagerank(net_undirected, alpha=0.85, weight='weight')
         nx.set_node_attributes(net_undirected, pagerank, "pagerank")
-
-        if self.extractor.create_gexf:
-            nx.write_gexf(net, f'{self.extractor.export_folder}/net.gexf')
-            nx.write_gexf(net_undirected, f'{self.extractor.export_folder}/net_undirected.gexf')
 
         return net_undirected, net
 

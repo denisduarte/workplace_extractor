@@ -49,7 +49,7 @@ class Extractor(object):
 
         # optional options
         args = ['since', 'until', 'post_id', 'group_id', 'event_id', 'author_id', 'feed_id', 'active_only',
-                'create_gexf', 'node_attributes', 'additional_people_attributes']
+                'node_attributes', 'additional_people_attributes']
         for key, value in kwargs.items():
             if key in args:
                 setattr(self, key, value)
@@ -92,20 +92,21 @@ class Extractor(object):
         elif self.export == 'Interactions':
             extractor = InteractionExtractor(extractor=self)
 
-        #await extractor.extract(items_per_page=self.items_per_page)
+        await extractor.extract(items_per_page=self.items_per_page)
 
         #with open(f'{self.export_folder}/pk_extractor_nodes-person.pickle', 'wb') as picke_file:
         #    pickle.dump(extractor.nodes, picke_file)
 
-        with open(f'{self.export_folder}/pk_extractor_nodes-person.pickle', 'rb') as picke_file:
-            extractor.nodes = pickle.load(picke_file)
+        #with open(f'{self.export_folder}/pk_extractor_nodes-person.pickle', 'rb') as picke_file:
+        #    extractor.nodes = pickle.load(picke_file)
 
         nodes_pd = extractor.nodes.to_pandas(self)
         nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True)
 
-        print('done')
-
-        return nodes_pd
+        if self.export == 'Interactions':
+            return nodes_pd, extractor.net_undirected, extractor.net_directed
+        else:
+            return nodes_pd
 
     async def fetch(self, http_calls):
         headers = {'Authorization': f'Bearer {self.token}',
