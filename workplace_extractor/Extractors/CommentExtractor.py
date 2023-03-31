@@ -22,7 +22,7 @@ class CommentExtractor:
         post_extractor.nodes.extend(people_extractor.nodes)
 
         # Dummy feed
-        feed = Bot({'id': 1})
+        feed = Bot(self.extractor, {'id': 1})
 
         # Get post
         fields = 'id,from,type,created_time,status_type,object_id,link,message,story'

@@ -8,7 +8,7 @@ import numpy as np
 
 
 class Author(Node):
-    def __init__(self, node_id, name, author_type, title, active, division, department, building, email,
+    def __init__(self, extractor, node_id, name, author_type, title, active, division, department, building, email,
                  emp_num, invited, invite_date, claimed, feed):
         Node.__init__(self, node_id)
         self.name = name
@@ -24,6 +24,8 @@ class Author(Node):
         self.invite_date = invite_date
         self.claimed = claimed
         self.feed = feed
+
+        self.set_additional_attributes(extractor)
 
     def to_dict(self, extractor, origin='extractor'):
         as_dict = {
@@ -42,25 +44,41 @@ class Author(Node):
             'claimed': self.claimed
         }
 
-        if hasattr(extractor, 'additional_people_attributes'):
-            if extractor.additional_people_attributes:
-                files = extractor.additional_people_attributes.split(',')
+        if hasattr(extractor, 'additional_people_attributes') and extractor.additional_people_attributes:
+            files = extractor.additional_people_attributes.split(',')
 
-                for file in files:
-                    # get the names of the additional attributes and remove first column (used as join)
-                    people_attributes = pd.read_csv(file, sep=';', nrows=0).columns.tolist()[1:]
+            for file in files:
+                # get the names of the additional attributes and remove first column (used as join)
+                people_attributes = pd.read_csv(file, sep=';', nrows=0).columns.tolist()[1:]
 
-                    for column in people_attributes:
-                        as_dict[column] = getattr(self, column)
+                for column in people_attributes:
+                    as_dict[column] = getattr(self, column)
 
         if extractor.export == 'POSTS' and self.feed is not None and origin == 'extractor':
             as_dict['feed'] = [post.to_dict(extractor) for post in self.feed.nodes]
 
         return as_dict
 
+    def set_additional_attributes(self, extractor):
+
+        if hasattr(extractor, 'additional_people_attributes') and extractor.additional_people_attributes:
+            files = extractor.additional_people_attributes.split(',')
+
+            for file in files:
+                people_attributes = pd.read_csv(file, sep=';')
+                join = people_attributes.columns[0]
+
+                for column in people_attributes.columns:
+                    if column != join:
+                        join_value = getattr(self, join)
+                        try:
+                            value_index = people_attributes[join].str.lower() == join_value.lower()
+                            setattr(self, column, people_attributes[value_index][column].values[0])
+                        except IndexError:
+                            setattr(self, column, '')
+
 
 class Person(Author):
-
     def __init__(self, extractor, data):
         node_id = str(data.get('id'))
         name = data.get('name', {}).get('formatted', '')
@@ -88,33 +106,14 @@ class Person(Author):
                       .get('claimed', '')
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, active, division,
+        Author.__init__(self, extractor, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)
 
         self.set_additional_attributes(extractor)
 
-    def set_additional_attributes(self, extractor):
-
-        if hasattr(extractor, 'additional_people_attributes'):
-            if extractor.additional_people_attributes:
-                files = extractor.additional_people_attributes.split(',')
-
-                for file in files:
-                    people_attributes = pd.read_csv(file, sep=';')
-                    join = people_attributes.columns[0]
-
-                    for column in people_attributes.columns:
-                        if column != join:
-                            join_value = getattr(self, join)
-                            try:
-                                value_index = people_attributes[join].str.lower() == join_value.lower()
-                                setattr(self, column, people_attributes[value_index][column].values[0])
-                            except IndexError:
-                                setattr(self, column, '')
-
 
 class Bot(Author):
-    def __init__(self, data):
+    def __init__(self, extractor, data):
         node_id = str(data.get('id'))
         name = data.get('name', {})
         author_type = 'Bot/Ext'
@@ -131,5 +130,5 @@ class Bot(Author):
         claimed = ''
         feed = PostCollection()
 
-        Author.__init__(self, node_id, name, author_type, title, active, division,
+        Author.__init__(self, extractor, node_id, name, author_type, title, active, division,
                         department, building, email, emp_num, invited, invite_date, claimed, feed)

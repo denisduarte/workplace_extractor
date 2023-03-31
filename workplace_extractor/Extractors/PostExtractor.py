@@ -310,7 +310,7 @@ class PostExtractor:
 
         if not isinstance(data, pd.DataFrame):
             if data:
-                kwargs.get('post').author = Bot(data)
+                kwargs.get('post').author = Bot(self.extractor, data)
 
         self.counter.increment()
         print(self.counter)
@@ -404,7 +404,7 @@ class PostExtractor:
 
         # author = copy(author)
         if author is None:
-            author = Bot(data.get('from', {}))
+            author = Bot(self.extractor, data.get('from', {}))
         author.feed = None
 
         interaction.person = author
