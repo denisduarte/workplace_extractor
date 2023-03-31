@@ -3,6 +3,7 @@ from .Extractors import PersonExtractor, InteractionExtractor, EventExtractor
 
 import sys
 import os
+import errno
 import logging
 import asyncio
 import aiohttp
@@ -60,9 +61,6 @@ class Extractor(object):
         sys.setrecursionlimit(self.max_recursion * 2)
 
     async def init(self):
-        if not os.path.exists(self.export_folder):
-            os.makedirs(self.export_folder)
-
         if self.loglevel != 'NONE':
             logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                                 filename=f'{self.export_folder}/workplace_extractor.log',
