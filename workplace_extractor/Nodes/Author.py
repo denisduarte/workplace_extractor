@@ -4,12 +4,10 @@ from .Node import Node
 from .NodeCollection import PostCollection
 from datetime import datetime
 
-import numpy as np
-
 
 class Author(Node):
-    def __init__(self, extractor, node_id, name, author_type, title, active, division, department, building, email,
-                 emp_num, invited, invite_date, claimed, feed):
+    def __init__(self, extractor, node_id, name='', author_type='', title='', active='', division='', department='',
+                 building='', email='', emp_num='', invited=None, invite_date='', claimed=None, feed=None):
         Node.__init__(self, node_id)
         self.name = name
         self.author_type = author_type

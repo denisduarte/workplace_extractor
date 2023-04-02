@@ -92,10 +92,10 @@ class Extractor(object):
 
         await extractor.extract(items_per_page=self.items_per_page)
 
-        #with open(f'{self.export_folder}/pk_extractor_nodes-person.pickle', 'wb') as picke_file:
+        #with open(f'{self.export_folder}/pk_extractor_nodes-atendees.pickle', 'wb') as picke_file:
         #    pickle.dump(extractor.nodes, picke_file)
 
-        #with open(f'{self.export_folder}/pk_extractor_nodes-person.pickle', 'rb') as picke_file:
+        #with open(f'{self.export_folder}/pk_extractor_nodes-atendees.pickle', 'rb') as picke_file:
         #    extractor.nodes = pickle.load(picke_file)
 
         nodes_pd = extractor.nodes.to_pandas(self)

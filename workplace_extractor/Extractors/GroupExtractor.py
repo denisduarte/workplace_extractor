@@ -108,7 +108,7 @@ class MembersExtractor:
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
         if 'data' in data and data['data']:
-            collection = NodeCollection([Member(member) for member in data['data']])
+            collection = NodeCollection([Member(self.extractor, member) for member in data['data']])
             kwargs.get('members').extend(collection)
 
             next_page = data.get('paging', {}).get('next')

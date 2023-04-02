@@ -49,6 +49,23 @@ class NodeCollection:
         for node in self.nodes:
             setattr(node, attribute, value)
 
+    @staticmethod
+    def get_author_columns(extractor):
+        columns = ['author_id', 'author_email', 'author_name', 'author_type', 'author_title',
+                           'author_division', 'author_department', 'author_active']
+
+        if hasattr(extractor, 'additional_people_attributes') and extractor.additional_people_attributes:
+            files = extractor.additional_people_attributes.split(',')
+
+            for file in files:
+                # get the names of the additional attributes and remove first column (used as join)
+                people_attributes = pd.read_csv(file, sep=';', nrows=0).columns.tolist()[1:]
+
+                for column in people_attributes:
+                    columns.append(f'author_{column}')
+
+        return columns
+
 
 class PostCollection(NodeCollection):
 
@@ -104,8 +121,8 @@ class PostCollection(NodeCollection):
                             'post_created_time', 'post_type', 'post_status_type', 'post_message', 'post_story',
                             'post_object_link', 'post_object_id', 'post_seen', 'post_reactions', 'post_comments',
                             'post_comments_reactions', 'post_replies', 'post_replies_reactions', 'post_link',
-                            'post_hashtags', 'author_id', 'author_email', 'author_name', 'author_type', 'author_title',
-                            'author_division', 'author_department', 'author_active']
+                            'post_hashtags']
+            column_order.extend(self.get_author_columns(extractor))
 
             df = df[column_order]
 
@@ -184,9 +201,9 @@ class CommentCollection(NodeCollection):
                 comments.append(reply)
 
         column_order = ['id', 'parent_id', 'replies', 'message', 'total_reactions', 'reactions_like', 'reactions_love',
-                        'reactions_care', 'reactions_haha', 'reactions_wow', 'reactions_sad', 'reactions_angry',
-                        'author_id', 'author_name', 'author_email', 'author_type', 'author_title', 'author_key',
-                        'author_department']
+                        'reactions_care', 'reactions_haha', 'reactions_wow', 'reactions_sad', 'reactions_angry']
+
+        column_order.extend(self.get_author_columns(extractor))
 
         df = pd.DataFrame(comments)
         df = df[column_order]
@@ -210,17 +227,12 @@ class CommentCollection(NodeCollection):
         total_replies = len(comment.comments.nodes)
         comment_dict['replies'] = total_replies
 
-        comment_dict['author_id'] = comment_dict.get('person', {}).get('id')
-        comment_dict['author_name'] = comment_dict.get('person', {}).get('name')
-        comment_dict['author_email'] = comment_dict.get('person', {}).get('email')
-        comment_dict['author_type'] = comment_dict.get('person', {}).get('type')
-        comment_dict['author_title'] = comment_dict.get('person', {}).get('title')
-        comment_dict['author_key'] = comment_dict.get('person', {}).get('emp_num')
-        comment_dict['author_department'] = comment_dict.get('person', {}).get('department')
+        author_dict = comment.person.to_dict(extractor)
+        author_dict = {f"author_{key}": val for key, val in author_dict.items()}
 
         del comment_dict['person']
         
-        return comment_dict
+        return {**comment_dict, **author_dict}
         
 
 class PeopleCollection(NodeCollection):
