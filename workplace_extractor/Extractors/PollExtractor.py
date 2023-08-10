@@ -45,6 +45,7 @@ class PollExtractor:
         self.counter.total = len(http_calls)
         self.counter.count = 0
 
+
         await self.extractor.fetch(http_calls)
 
         logging.info(f'Poll Extraction ended with {len(self.options_ids)} option extracted')
