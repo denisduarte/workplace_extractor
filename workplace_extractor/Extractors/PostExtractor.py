@@ -204,6 +204,10 @@ class PostExtractor:
         print(self.counter)
 
     async def call_info_views(self, data, session, **kwargs):
+
+        if kwargs.get('post').author_id == '100089517802180':
+            print(1)
+
         if 'data' in data:
             for item in data['data']:
                 view = View()
@@ -220,6 +224,11 @@ class PostExtractor:
                 await self.call_info_views(new_data, session, **kwargs)
 
     async def call_info_reactions(self, data, session, **kwargs):
+
+        if kwargs.get('post').author_id == '100089517802180':
+            print(1)
+
+
         if 'data' in data:
             for item in data['data']:
                 reaction = Reaction(item)
@@ -239,6 +248,9 @@ class PostExtractor:
 
         if isinstance(data, list):
             data = {'data': data}
+
+        if kwargs.get('post').author_id == '100089517802180':
+            print(1)
 
         if 'data' in data:
             for item in data['data']:

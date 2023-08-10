@@ -283,3 +283,30 @@ class EventCollection(NodeCollection):
 class InteractionCollection(NodeCollection):
     def to_pandas(self, extractor):
         return self.nodes
+
+
+class PollOptionsCollection(NodeCollection):
+    def to_pandas(self, extractor):
+
+        df = pd.DataFrame()
+
+        if not self.nodes:
+            return df
+
+        for option in self.nodes:
+            option_dict = option.to_dict(extractor)
+            row_option = pd.DataFrame([{key: option_dict[key] for key in ['id', 'name']}])
+            row_option = row_option.add_prefix('option_')
+
+            rows_voters = []
+            for voter in option_dict.get('voters'):
+                row_voter = pd.DataFrame([{key: voter[key] for key in voter.keys()}])
+                row_voter = row_voter.add_prefix('voter_')
+
+                rows_voters.append(row_voter)
+
+            df_option = row_option.merge(pd.concat(rows_voters), how="cross")
+
+            df = pd.concat([df, df_option])
+
+        return df

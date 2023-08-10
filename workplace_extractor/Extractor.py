@@ -1,15 +1,18 @@
 from .Extractors import PostExtractor, CommentExtractor, GroupExtractor, MembersExtractor
-from .Extractors import PersonExtractor, InteractionExtractor, EventExtractor
+from .Extractors import PersonExtractor, InteractionExtractor, EventExtractor, PollExtractor
 
 import sys
 import os
 import errno
+import time
+from datetime import datetime
 import logging
 import asyncio
 import aiohttp
 import pandas as pd
 import random
 import pickle
+
 
 class AuthTokenError(Exception):
     pass
@@ -89,17 +92,19 @@ class Extractor(object):
             extractor = EventExtractor(extractor=self)
         elif self.export == 'Interactions':
             extractor = InteractionExtractor(extractor=self)
+        elif self.export == 'Poll':
+            extractor = PollExtractor(extractor=self)
 
         await extractor.extract(items_per_page=self.items_per_page)
 
-        #with open(f'{self.export_folder}/pk_extractor_nodes-atendees.pickle', 'wb') as picke_file:
-        #    pickle.dump(extractor.nodes, picke_file)
-
-        #with open(f'{self.export_folder}/pk_extractor_nodes-atendees.pickle', 'rb') as picke_file:
-        #    extractor.nodes = pickle.load(picke_file)
-
         nodes_pd = extractor.nodes.to_pandas(self)
         nodes_pd.replace(to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"], value=[" ", " "], regex=True)
+
+        """"""
+        #outfile = f'{self.export_folder}/export-poll2.xlsx'
+        #with pd.ExcelWriter(outfile, engine='xlsxwriter', engine_kwargs={'options': {'strings_to_urls': False}}) as wrt:
+        #    nodes_pd.to_excel(wrt, sheet_name='Results', index=False)
+        """"""
 
         if self.export == 'Interactions':
             return nodes_pd, extractor.net_undirected, extractor.net_directed
@@ -108,7 +113,7 @@ class Extractor(object):
 
     async def fetch(self, http_calls):
         headers = {'Authorization': f'Bearer {self.token}',
-                   # 'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36'
+                    #'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36'
                    #               ' (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36',
                    'Content-Type': 'application/json'}
 
@@ -139,7 +144,8 @@ class Extractor(object):
 
         tries = 0
         max_retries = self.max_http_retries
-        while tries < max_retries:
+        #while tries < max_retries:
+        while True:
             try:
                 tries += 1
                 async with session.get(url) as resp:
@@ -150,7 +156,8 @@ class Extractor(object):
                         return data
                     elif resp.status in [500]:
                         logging.error(f'Error 500 when calling {url}')
-                        raise Exception
+                        print(f'Erro 500 - {url}')
+                        #raise Exception
                     else:
                         content_type = 'application/json'
 
@@ -161,9 +168,13 @@ class Extractor(object):
                 logging.error(e)
                 logging.warning(f' {tries} of {max_retries}')
 
-        if tries == max_retries:
-            # raise TimeoutError('Too many retries')
-            logging.critical(f'Response returned ERROR 500 for {url}.')
+            if tries == max_retries:
+                tries = 0
+                # raise TimeoutError('Too many retries')
+                logging.critical(f'Response returned ERROR 500 for {url}.')
+                print(f'{datetime.now()} - Response returned ERROR 500 for {url}.')
+                await asyncio.sleep(30)
+
 
     @staticmethod
     def str_to_bool(str_arg):

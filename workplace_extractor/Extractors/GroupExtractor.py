@@ -34,6 +34,9 @@ class GroupExtractor:
 
         data = await self.extractor.fetch_url(url, session, 'GRAPH', **kwargs)
 
+        if data is None:
+            print(1)
+
         if data.get('data', []):
             for group in data.get('data', []):
                 admins = []

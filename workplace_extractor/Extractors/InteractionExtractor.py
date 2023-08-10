@@ -24,16 +24,19 @@ class InteractionExtractor:
 
     async def extract(self, items_per_page):
         post_extractor = PostExtractor(self.extractor)
-        await post_extractor.extract(items_per_page)
-        self.feeds = post_extractor.nodes
+        #await post_extractor.extract(items_per_page)
+        #self.feeds = post_extractor.nodes
 
-        #with open(f'{self.extractor.export_folder}/pk_interactions_feeds.pickle', 'wb') as picke_file:
+        #with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'wb') as picke_file:
         #    pickle.dump(self.feeds, picke_file)
-        #with open(f'{self.extractor.export_folder}/pk_interactions_feeds.pickle', 'rb') as picke_file:
-        #    self.feeds = pickle.load(picke_file)
+        with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'rb') as picke_file:
+            self.feeds = pickle.load(picke_file)
 
         print('starting build net')
         self.net_undirected, self.net_directed = self.build_net()
+
+        nx.write_gexf(self.net_directed, f'{self.extractor.export_folder}/net.gexf')
+        nx.write_gexf(self.net_undirected, f'{self.extractor.export_folder}/net_undirected.gexf')
 
         # get a list of person fields from either net, ignoring pagerank
         nodes = []
@@ -56,7 +59,8 @@ class InteractionExtractor:
         print('starting user summary')
         user_summary = self.build_user_summary(nodes)
         nodes = nodes.merge(user_summary, left_index=True, right_index=True)
-
+        with open(f'{self.extractor.export_folder}/nodes.pickle', 'wb') as picke_file:
+            pickle.dump(self.feeds, picke_file)
         self.nodes.nodes = nodes
         print('all done')
 
@@ -302,8 +306,10 @@ class InteractionExtractor:
     def list_node_attributes(self, node):
 
         attributes = {}
-
-        for attribute in self.node_attribute_list:
-            attributes[attribute] = getattr(node, attribute)
+        try:
+            for attribute in self.node_attribute_list:
+                attributes[attribute] = getattr(node, attribute)
+        except Exception as e:
+            print(1)
 
         return attributes

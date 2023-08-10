@@ -4,3 +4,4 @@ from workplace_extractor.Extractors.GroupExtractor import GroupExtractor, Member
 from workplace_extractor.Extractors.PersonExtractor import PersonExtractor
 from workplace_extractor.Extractors.InteractionExtractor import InteractionExtractor
 from workplace_extractor.Extractors.EventExtractor import EventExtractor
+from workplace_extractor.Extractors.PollExtractor import PollExtractor
