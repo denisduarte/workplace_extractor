@@ -24,13 +24,13 @@ class InteractionExtractor:
 
     async def extract(self, items_per_page):
         post_extractor = PostExtractor(self.extractor)
-        #await post_extractor.extract(items_per_page)
-        #self.feeds = post_extractor.nodes
+        await post_extractor.extract(items_per_page)
+        self.feeds = post_extractor.nodes
 
-        #with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'wb') as picke_file:
-        #    pickle.dump(self.feeds, picke_file)
-        with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'rb') as picke_file:
-            self.feeds = pickle.load(picke_file)
+        with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'wb') as picke_file:
+            pickle.dump(self.feeds, picke_file)
+        #with open(f'{self.extractor.export_folder}/pk_interactions_feeds3.pickle', 'rb') as picke_file:
+        #    self.feeds = pickle.load(picke_file)
 
         print('starting build net')
         self.net_undirected, self.net_directed = self.build_net()
