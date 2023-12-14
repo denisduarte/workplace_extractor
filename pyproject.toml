@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "workplace_extractor"
-version = "0.9.6"
+version = "0.9.7"
 description = "Extract data created in a corporate Workplace by Facebook installation using the Graph/SCIM APIs"
 license = "MIT"
 authors = ["Denis Duarte <den.duarte@gmail.com>",]
