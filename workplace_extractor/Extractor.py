@@ -150,7 +150,7 @@ class Extractor(object):
                 tries += 1
                 async with session.get(url) as resp:
                     if resp.status in [400, 401, 404]:
-                        logging.warning(f'Response returned {resp.status} for {url}.')
+                        logging.warning(f'Response returned {resp.status} for {url}. Try {tries}')
                         data = pd.DataFrame({'Errors': resp.status}, index=[0])
                         print('400')
                         return data
@@ -170,10 +170,9 @@ class Extractor(object):
 
             if tries == max_retries:
                 tries = 0
-                # raise TimeoutError('Too many retries')
-                logging.critical(f'Response returned ERROR 500 for {url}.')
-                print(f'{datetime.now()} - Response returned ERROR 500 for {url}.')
-                await asyncio.sleep(30)
+
+                logging.critical(f'Response returned ERROR 500 {max_retries}  times for {url}. Ignoring URL')
+                return {}
 
 
     @staticmethod
