@@ -209,7 +209,7 @@ class PostExtractor:
             print(1)
 
         if 'data' in data:
-            for item in data['data']:
+            for item in data.get('data', []):
                 view = View()
                 self.set_author(item, view, 'seen')
 
@@ -230,7 +230,7 @@ class PostExtractor:
 
 
         if 'data' in data:
-            for item in data['data']:
+            for item in data.get('data', []):
                 reaction = Reaction(item)
                 self.set_author(item, reaction, 'reactions')
 
@@ -253,14 +253,14 @@ class PostExtractor:
             print(1)
 
         if 'data' in data:
-            for item in data['data']:
+            for item in data.get('data', []):
                 comment = Comment(item)
                 self.set_author(item, comment, 'comments')
 
                 if item.get('reactions', {}).get('data'):
                     data_reactions = item.get('reactions', {})
                     while data_reactions is not None:
-                        for item_reaction in data_reactions.get('data'):
+                        for item_reaction in data_reactions.get('data', []):
                             reaction = Reaction(item_reaction)
                             self.set_author(item_reaction, reaction, 'reactions')
 
@@ -277,14 +277,14 @@ class PostExtractor:
                 if item.get('comments', {}).get('data'):
                     data_comments = item.get('comments', {})
                     while data_comments is not None:
-                        for item_comment in data_comments.get('data'):
+                        for item_comment in data_comments.get('data', []):
                             reply = Comment(item_comment)
                             self.set_author(item_comment, reply, 'comments')
 
                             if item_comment.get('reactions', {}).get('data'):
                                 data_comment_reactions = item_comment.get('reactions', {})
                                 while data_comment_reactions is not None:
-                                    for item_comment_reaction in data_comment_reactions.get('data'):
+                                    for item_comment_reaction in data_comment_reactions.get('data', []):
                                         reaction = Reaction(item_comment_reaction)
                                         self.set_author(item_comment_reaction, reaction, 'reactions')
 
